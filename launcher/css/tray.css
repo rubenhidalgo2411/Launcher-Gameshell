@@ -1,0 +1,56 @@
+/* GameShell · selector inferior («bandeja») y Precarga Post Intro.
+   La bandeja baja pegada al borde de abajo y solo oscurece su propia franja con un degradado, así el estilo y el fondo
+   que estás cambiando se ven a pantalla casi completa mientras deslizas. --u = alto de pantalla / 1080. */
+
+/* ───────────── bandeja ───────────── */
+#tray{position:fixed;left:0;right:0;bottom:0;z-index:4;padding:calc(30*var(--u)) 0 calc(22*var(--u));text-align:center;color:#fff;
+  background:linear-gradient(0deg,#03050df0 0%,#03050dd6 55%,#03050d70 82%,#0000 100%);
+  transform:translateY(106%);transition:transform .38s cubic-bezier(.2,.8,.2,1),padding-bottom .3s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+#tray.on{transform:none;pointer-events:auto}
+#tray.hi{padding-bottom:calc(126*var(--u))}   /* al elegir la barra inferior se levanta para no tapar esa barra (que se dibuja por encima del degradado) */
+#tray.short #tview{height:calc(134*var(--u))}  /* barras: tarjetas de solo texto, más bajas (así tapan menos pantalla) */
+#tray.short .tc{height:calc(108*var(--u))}
+#hint{transition:opacity .25s}
+body.tray-open:not(.tray-bar) #hint{opacity:0!important}   /* la barra de abajo solo se ve mientras se elige esa barra */
+body.tray-bar #hint{z-index:5}
+
+#ttabs{display:flex;justify-content:center;gap:calc(12*var(--u));margin-bottom:calc(12*var(--u))}
+.tt{padding:calc(6*var(--u)) calc(20*var(--u));border-radius:999px;font-size:calc(17*var(--u));background:#ffffff14;border:1px solid #ffffff26;opacity:.72;cursor:pointer;transition:background .2s,color .2s,opacity .2s}
+.tt.s{background:#fff;color:#0b1020;opacity:1;font-weight:600}
+
+#tview{position:relative;overflow:hidden;height:calc(196*var(--u))}
+#ttrack{position:absolute;left:0;top:calc(12*var(--u));display:flex;gap:calc(20*var(--u));transition:transform .36s cubic-bezier(.2,.8,.2,1);will-change:transform}
+.tc{flex:none;position:relative;overflow:hidden;width:calc(300*var(--u));height:calc(169*var(--u));border-radius:calc(16*var(--u));background:#101830 center/cover no-repeat;
+  opacity:.55;transform:scale(.93);transition:transform .3s,opacity .3s,box-shadow .3s;cursor:pointer;box-shadow:0 10px 24px #0007}
+.tc.s{opacity:1;transform:scale(1.04);box-shadow:0 0 0 3px #fff,0 0 0 8px #ffffff30,0 18px 40px #000a}
+.tl{position:absolute;left:0;right:0;bottom:0;padding:calc(30*var(--u)) calc(14*var(--u)) calc(9*var(--u));background:linear-gradient(0deg,#000d,#0000);font-size:calc(17*var(--u));font-weight:600;text-align:left;text-shadow:0 1px 6px #000}
+.tl small{display:block;font-weight:400;opacity:.7;font-size:calc(12.5*var(--u));margin-top:calc(1*var(--u))}
+.tc.cur::after{content:'✓';position:absolute;top:calc(8*var(--u));right:calc(8*var(--u));width:calc(26*var(--u));height:calc(26*var(--u));border-radius:50%;background:#4ade80;color:#052e16;display:grid;place-items:center;font-size:calc(16*var(--u));font-weight:800;line-height:1}
+/* tarjetas de texto (barras, «Del estilo», «Añadir foto…») */
+.tc.txt{display:grid;place-items:center;text-align:center;padding:calc(14*var(--u));background:linear-gradient(150deg,#1b2a55,#0c1431)}
+.tc.txt .tl{position:static;background:none;padding:0;text-align:center;text-shadow:none}
+.tc.add{background:linear-gradient(150deg,#16361f,#0b1a12);border:2px dashed #6ee7a066}
+.tc.add b{display:block;font-size:calc(38*var(--u));font-weight:300;line-height:1;margin-bottom:calc(6*var(--u))}
+.tc.auto{background:linear-gradient(150deg,#2a2150,#120e2c)}
+.tc.del{background:linear-gradient(150deg,#4a1d24,#1d0b0f)}
+.tc .org{position:absolute;top:calc(8*var(--u));left:calc(8*var(--u));padding:calc(2*var(--u)) calc(9*var(--u));border-radius:999px;background:#000a;font-size:calc(11.5*var(--u));letter-spacing:.02em;opacity:.9}
+
+#tinfo{margin-top:calc(8*var(--u));font-size:calc(19*var(--u));min-height:calc(26*var(--u))}
+#tn{font-weight:700;margin-right:calc(12*var(--u))}
+#td{opacity:.7}
+#thelp{margin-top:calc(8*var(--u));font-size:calc(15*var(--u));opacity:.6;display:flex;gap:calc(26*var(--u));justify-content:center;align-items:center}
+#thelp span{white-space:nowrap}
+
+/* ───────────── Precarga Post Intro (la foto «Welcome back… Press the PS button to use the controller») ───────────── */
+#psw{position:fixed;inset:0;z-index:9000;display:none;background:#000;color:#fff;cursor:none;overflow:hidden}
+#psw.on{display:block}
+#psw.out{opacity:0;transition:opacity .7s ease-in}
+#pswbg{position:absolute;inset:0;background:linear-gradient(160deg,#0d1442,#060a22 60%,#0f0830) center/cover no-repeat;opacity:0;transition:opacity .9s ease-out}
+#psw.on #pswbg{opacity:1}
+#pswmsg{position:absolute;left:0;right:0;bottom:calc(40*var(--u));text-align:center;font-size:calc(18*var(--u));letter-spacing:.02em;opacity:0;text-shadow:0 2px 14px #000;transition:opacity .6s,color .3s}
+#psw.on #pswmsg{opacity:.7;transition-delay:.9s}
+#psw.ok #pswmsg{opacity:1;color:#8fe8b0;transition-delay:0s}
+/* sin la foto de bienvenida (si la han borrado): el aviso va en grande en el centro */
+#psw.fb #pswmsg{bottom:auto;top:46%;font-size:calc(34*var(--u));opacity:1}
+
+.tc .org.new{background:#1fbf6b;color:#03200e;font-weight:700;opacity:1}

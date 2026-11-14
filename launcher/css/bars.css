@@ -1,0 +1,55 @@
+/* GameShell · barras superior e inferior. Cada una es una VARIANTE que se elige en Opciones > Apariencia
+   (Barra superior / Barra inferior). «Mismo del estilo» usa la que le toca a cada estilo.
+   Las variantes a-* vienen de «actualizado» (antes estaban pegadas a cada estilo en themes.css, sin cambiar ni una regla);
+   las b vienen de «actualizacion». --u = alto de pantalla / 1080. */
+
+/* ───────────── a-ps5 (de «actualizado»): barra superior e inferior del estilo PS5 ───────────── */
+#top.tb-a-ps5{height:calc(130*var(--u));padding:calc(14*var(--u)) calc(93*var(--u)) 0;font-size:calc(36*var(--u))}
+#top.tb-a-ps5 #tabs{gap:calc(46*var(--u))}
+#top.tb-a-ps5 #tabs b{font-weight:600}
+#top.tb-a-ps5 #tweb{display:inline;opacity:.5;cursor:pointer}
+#top.tb-a-ps5 #tr{gap:calc(34*var(--u))}
+#top.tb-a-ps5 .ic{width:calc(38*var(--u));height:calc(38*var(--u))}
+#top.tb-a-ps5 #opt{order:1}
+#top.tb-a-ps5 #pw{order:2}
+#top.tb-a-ps5 #av{display:grid;order:3;width:calc(46*var(--u));height:calc(46*var(--u));border-radius:50%;place-items:center;font-style:normal;font-size:calc(24*var(--u));font-weight:600;background:linear-gradient(135deg,#4f8cff,#9b5cff);cursor:pointer}
+#top.tb-a-ps5 #clk{order:4;font-size:calc(34*var(--u))}
+#hint.hb-a-ps5{left:calc(172*var(--u));bottom:calc(44*var(--u));font-size:calc(22*var(--u));opacity:.72}
+#hint.hb-a-ps5 .pg,[data-theme=ps5] #oh .pg{color:#fff}
+
+/* ───────────── a-ps3 (de «actualizado»): barra superior e inferior del estilo PS3 ───────────── */
+#top.tb-a-ps3{height:calc(110*var(--u));padding:0 calc(86*var(--u));font-size:calc(30*var(--u));justify-content:flex-end}
+#top.tb-a-ps3 #tabs{display:none}
+#top.tb-a-ps3 #dt{display:inline;opacity:.9;order:1}
+#top.tb-a-ps3 #clk{order:2}
+#top.tb-a-ps3 #opt{order:3}
+#top.tb-a-ps3 #pw{order:4}
+#top.tb-a-ps3 .ic{width:calc(32*var(--u));height:calc(32*var(--u))}
+#hint.hb-a-ps3{left:auto;right:calc(86*var(--u));bottom:calc(40*var(--u));font-size:calc(20*var(--u));opacity:.7}
+
+/* ───────────── a-ps2 (de «actualizado»): barra superior e inferior del estilo PS2 ───────────── */
+#top.tb-a-ps2{font-size:calc(24*var(--u));padding:0 calc(80*var(--u))}
+#top.tb-a-ps2 #tabs b{font-weight:300;letter-spacing:.2em;text-transform:uppercase;opacity:.7}
+#hint.hb-a-ps2{left:50%;transform:translateX(-50%);bottom:calc(34*var(--u));font-size:calc(19*var(--u))}
+
+/* ───────────── a-synth (de «actualizado»): barra superior e inferior del estilo Synthwave ───────────── */
+#top.tb-a-synth #clk,#top.tb-a-synth #tabs b{text-shadow:0 0 calc(12*var(--u)) #ff3cac}
+
+/* ───────────── b (de «actualizacion») ───────────── */
+/* Barra superior: «Juegos» + reloj + apagar (sin el icono de ajustes) */
+#top.tb-b #opt{display:none}
+body[data-theme=b-ps5] #top.tb-b b{font-size:26px}
+/* Barra inferior: teclas (Intro / Esc / Supr) + botones redondos de mando */
+#hint.hb-b{left:64px;bottom:26px;gap:40px;font-size:17px;color:#fff;opacity:.85}
+#hint.hb-b>span{display:flex;gap:9px;align-items:center}
+#hint.hb-b i{opacity:.5;font-style:normal}
+#hint.hb-b em{font-style:normal}
+#hint.hb-b kbd{font:600 13px/1 "Segoe UI",system-ui,sans-serif;padding:6px 10px;border-radius:8px;background:#ffffff1c;border:1px solid #ffffff38;box-shadow:0 2px 0 #0007}
+#hint.hb-b .pb{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#ffffff14;border:1.5px solid #ffffff55}
+#hint.hb-b .pb svg{width:19px;height:19px;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+#hint.hb-b .pb.x svg{stroke:#78a6ff}
+#hint.hb-b .pb.o svg{stroke:#ff6b7b}
+#hint.hb-b .pb.q svg{stroke:#f08ed2}
+#hint.hb-b .pb.tri svg{stroke:#55d6a4}
+#hint.hb-b .pb.opt{width:46px;border-radius:15px}
+#hint.hb-b .pb.opt svg{stroke:#fff;stroke-width:2.2}

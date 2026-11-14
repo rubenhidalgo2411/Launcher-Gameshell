@@ -1,0 +1,96 @@
+/* GameShell · estilos que vienen de «actualizacion» (ids b-classic, b-ps5, b-ps3, b-ps2, b-neon, b-glass, b-oled).
+   Son las mismas reglas de su style.css; solo cambia el selector (antes html[data-theme=ps5], ahora body[data-theme=b-ps5])
+   porque en este launcher ya existen estilos con esos nombres. La colocación de los iconos (antes: fila flex desplazada con
+   translateX) se calcula ahora en app.js con la misma fórmula (geomB), así que se ve igual.
+   Medidas en px fijos (no escalan con la pantalla), como en el original. */
+/* NOTA: las reglas del FONDO animado de cada estilo (#bg y sus decorados dentro de #fx) cuelgan de [data-fx=…] y no de [data-theme=…]: así se puede usar el fondo de un estilo con la colocación de otro (app.js: FX). */
+
+/* ───────────── lo común a todos los estilos «b-» ───────────── */
+/* las etiquetas «Arranca solo» y «Oculta» de «actualizacion» son elementos <u> dentro del icono (en los demás estilos van en ::before/::after) */
+body[data-theme^=b-] .t::before,body[data-theme^=b-] .t::after{content:none}
+.t u{display:none;text-decoration:none}
+body[data-theme^=b-] .t[data-a] .ba{display:block;position:absolute;left:50%;bottom:14px;transform:translateX(-50%);padding:3px 12px;border-radius:999px;background:#0008;font-size:14px;white-space:nowrap}
+body[data-theme^=b-] .t[data-h]{outline:2px dashed #fff9;outline-offset:6px}
+body[data-theme^=b-] .t[data-h] .bh{display:block;position:absolute;left:12px;top:12px;padding:3px 10px;border-radius:999px;background:#000b;font-size:13px}
+body[data-theme^=b-] .t.cv{overflow:hidden}
+body[data-theme^=b-] .t.cv img{width:100%;height:100%;object-fit:cover;filter:none}
+/* título, subtítulo y botón: un bloque (#info) que fluye, como en «actualizacion» */
+body[data-theme^=b-] #info{display:block;position:fixed;left:0;right:0;top:calc(36% + var(--b) + 52px);text-align:center}
+body[data-theme^=b-] #title{position:static;text-align:inherit;font-size:36px;font-weight:600}
+body[data-theme^=b-] #sub{position:static;text-align:inherit;margin-top:10px;opacity:.6}
+#cta{display:none;align-items:center;gap:12px;padding:14px 34px;border-radius:999px;background:#fff;color:#0b1020;font-weight:700;font-size:22px}
+#cta svg{width:22px;height:22px;fill:#0b1020;stroke:none}
+/* foto de fondo: como en «actualizacion» (degradado más marcado y zoom lento) */
+body[data-theme^=b-] #shade{background:linear-gradient(#000a,#0000 26%,#0000 50%,#000d)}
+body[data-theme^=b-].hasbg #bgimg{animation:bk-kb 45s ease-in-out infinite alternate}
+@keyframes bk-kb{to{transform:scale(1.08)}}
+
+/* ───────────── Clásico · actualizacion ───────────── */
+body[data-theme=b-classic] .t{border-radius:28px}
+
+/* ───────────── PS5 · actualizacion: fila de iconos arriba, selección grande con marco blanco, cartel a la derecha ───────────── */
+body[data-fx=b-ps5] #bg{background:radial-gradient(70vw 80vh at 76% 38%,color-mix(in srgb,var(--c) 62%,transparent),transparent 70%),radial-gradient(60vw 70vh at 6% 105%,#2a3fb8aa,transparent),radial-gradient(50vw 40vh at 32% 0%,#5b3dd666,transparent),linear-gradient(160deg,#0d1442,#060a22 60%,#0f0830);animation:none}
+body[data-theme=b-ps5]::before{content:"";position:fixed;left:0;top:96px;width:64px;height:190px;background:linear-gradient(90deg,#0a1034,transparent);z-index:1;pointer-events:none}
+body[data-theme=b-ps5] .t{border-radius:22px;box-shadow:0 6px 18px #0006}
+body[data-theme=b-ps5] .t.s{box-shadow:0 0 0 3px #fff,0 0 0 8px #ffffff2e,0 22px 44px #000a}
+body[data-theme=b-ps5] .t.s::before{content:attr(data-n);position:absolute;left:0;top:calc(100% + 18px);font-size:15px;font-weight:500;white-space:nowrap}
+body[data-theme=b-ps5] .t[data-a] .ba{left:auto;right:7px;top:7px;bottom:auto;transform:none;width:11px;height:11px;padding:0;background:#4ade80;font-size:0}
+body[data-theme=b-ps5] .t[data-h] .bh{display:none}
+body[data-theme=b-ps5] #info{left:72px;right:auto;top:auto;bottom:20vh;width:46vw;text-align:left}
+body[data-theme=b-ps5] #title{font-size:clamp(40px,4.6vw,78px);font-weight:800;line-height:1.05;letter-spacing:-.01em;text-shadow:0 6px 30px #0008}
+body[data-theme=b-ps5] #sub{font-size:20px;margin:14px 0 30px}
+body[data-theme=b-ps5] #cta{display:inline-flex}
+/* el cartel de la derecha (en «actualizacion» era #hero; aquí #bhero, porque #hero es el fondo grande del PS5 de «actualizado») */
+#bhero{display:none;position:fixed;right:9vw;top:calc(50% - 150px);width:min(420px,30vw);aspect-ratio:1;border-radius:44px;place-items:center;overflow:hidden;background:linear-gradient(150deg,color-mix(in srgb,var(--c) 80%,#fff 14%),color-mix(in srgb,var(--c) 45%,#000));box-shadow:0 50px 120px #000b,0 0 160px color-mix(in srgb,var(--c) 55%,transparent);pointer-events:none}
+body[data-theme=b-ps5] #bhero{display:grid}
+/* cada cartel es una capa (.bk) dentro del marco: al cambiar de programa se funde la capa nueva sobre la anterior y el marco entra desde la derecha una sola vez (lo hace app.js con la Web Animations API, sin reiniciarla a medias) */
+#bhero>.bk{grid-area:1/1;width:100%;height:100%;display:grid;place-items:center}
+#bhero img{width:62%;height:62%;object-fit:contain;filter:drop-shadow(0 22px 34px #0009)}
+#bhero>.bk.cv img{width:100%;height:100%;object-fit:cover;filter:none}
+#bhero svg{width:40%;height:40%;stroke:#fff;fill:none;stroke-width:1.2;stroke-linecap:round}
+
+/* ───────────── PS3 · Onda XMB: iconos sin fondo (las ondas las dibuja fxb.js en un canvas) ───────────── */
+body[data-fx=b-ps3] #bg{background:#04060c;animation:none}
+body[data-theme=b-ps3] .t{background:none;box-shadow:none;border-radius:14px;opacity:.62}
+body[data-theme=b-ps3] .t.s{opacity:1;box-shadow:none;filter:drop-shadow(0 0 22px #fffb)}
+body[data-theme=b-ps3] .t img{width:100%;height:100%;filter:drop-shadow(0 6px 14px #000a)}
+body[data-theme=b-ps3] .t.cv img{border-radius:12px}
+body[data-theme=b-ps3] .t svg{width:72%;height:72%;stroke-width:1.1}
+body[data-theme=b-ps3] .t[data-a] .ba{left:auto;right:4px;top:4px;bottom:auto;transform:none;width:10px;height:10px;padding:0;background:#4ade80;font-size:0}
+body[data-theme=b-ps3] .t[data-h]{outline:0}
+body[data-theme=b-ps3] .t[data-h] .bh{display:none}
+body[data-theme=b-ps3] #info{left:24%;right:auto;top:calc(27% + 150px);text-align:left}
+body[data-theme=b-ps3] #title{font-size:32px;font-weight:300;letter-spacing:.02em;text-shadow:0 2px 14px #0008}
+body[data-theme=b-ps3] #sub{font-size:18px;opacity:.6}
+
+/* ───────────── PS2 · Torres: tarjetas de cristal oscuro (las torres las dibuja fxb.js en un canvas) ───────────── */
+body[data-fx=b-ps2] #bg{background:linear-gradient(#01030c,#02143d 70%,#031a52);animation:none}
+body[data-theme=b-ps2] .t{background:linear-gradient(160deg,#10357a99,#06133a99);border:1px solid #7bb6ff55;border-radius:22px;box-shadow:0 0 40px #2a6dff22,inset 0 0 40px #4a9dff14}
+body[data-theme=b-ps2] .t.s{border-color:#d6eaff;box-shadow:0 0 0 2px #d6eaff55,0 0 70px #4a9dffaa,inset 0 0 50px #7bb6ff33}
+body[data-theme=b-ps2] #title{font-weight:300;letter-spacing:.14em;text-transform:uppercase;font-size:32px;text-shadow:0 0 24px #6fb2ff}
+body[data-theme=b-ps2] #sub{letter-spacing:.06em;opacity:.55}
+
+/* ───────────── Neón · actualizacion: rejilla synthwave y marcos que brillan ───────────── */
+body[data-fx=b-neon] #bg{background:linear-gradient(#08001a,#1a0238 58%,#0a0018);animation:none;overflow:hidden}
+body[data-fx=b-neon] #bg::before{content:'';position:absolute;left:50%;top:43%;width:34vw;height:34vw;max-width:520px;max-height:520px;transform:translate(-50%,-50%);border-radius:50%;background:linear-gradient(#ffd36e,#ff3fb4 62%,#7a2cff);filter:blur(2px);box-shadow:0 0 120px #ff3fb488;-webkit-mask:linear-gradient(#000 55%,transparent 56%,#000 60%,transparent 61%,#000 66%,transparent 67%,#000 74%,transparent 76%,#000 84%,transparent 87%);mask:linear-gradient(#000 55%,transparent 56%,#000 60%,transparent 61%,#000 66%,transparent 67%,#000 74%,transparent 76%,#000 84%,transparent 87%)}
+body[data-fx=b-neon] #bg::after{content:'';position:absolute;left:-40%;right:-40%;bottom:5%;height:62%;background:linear-gradient(#1a0238,#0000 30%),repeating-linear-gradient(90deg,#ff3fb9cc 0 2px,#0000 2px 90px),repeating-linear-gradient(0deg,#22d3eecc 0 2px,#0000 2px 52px);transform:perspective(520px) rotateX(62deg);transform-origin:50% 100%;animation:bk-gridm 1.6s linear infinite}
+@keyframes bk-gridm{to{background-position:0 0,0 0,0 52px}}
+body[data-theme=b-neon] .t{background:#0b0418d9;border:2px solid var(--k);border-radius:22px;box-shadow:0 0 22px color-mix(in srgb,var(--k) 55%,transparent),inset 0 0 26px color-mix(in srgb,var(--k) 28%,transparent)}
+body[data-theme=b-neon] .t.s{box-shadow:0 0 0 2px #fff,0 0 50px var(--k),0 0 110px color-mix(in srgb,var(--k) 70%,transparent),inset 0 0 40px color-mix(in srgb,var(--k) 45%,transparent)}
+body[data-theme=b-neon] #title{text-transform:uppercase;letter-spacing:.1em;text-shadow:0 0 14px var(--c),0 0 34px var(--c)}
+body[data-theme=b-neon] #sub{color:#9be7ff;opacity:.8}
+
+/* ───────────── Cristal: manchas de color que flotan y tarjetas de vidrio esmerilado ───────────── */
+body[data-fx=b-glass] #bg{background:radial-gradient(50vw 50vw at 15% 20%,color-mix(in srgb,var(--c) 85%,transparent),transparent 65%),radial-gradient(45vw 45vw at 88% 30%,#8b5cf6bb,transparent 65%),radial-gradient(50vw 50vw at 60% 105%,#06b6d4bb,transparent 65%),#070a18;animation:bk-blobs 24s ease-in-out infinite alternate}
+@keyframes bk-blobs{to{transform:scale(1.18) rotate(6deg) translate(2%,-2%)}}
+body[data-theme=b-glass] .t{background:linear-gradient(145deg,#ffffff3d,#ffffff14);border:1px solid #ffffff59;border-radius:38px;backdrop-filter:blur(26px) saturate(1.6);box-shadow:0 24px 50px #0005,inset 0 1px 0 #ffffff77}
+body[data-theme=b-glass] .t.s{background:linear-gradient(145deg,#ffffff5c,#ffffff26);box-shadow:0 0 0 2px #ffffffcc,0 30px 70px #0007,inset 0 1px 0 #fff9}
+body[data-theme=b-glass] #title{text-shadow:0 4px 24px #0006}
+
+/* ───────────── OLED minimal: negro puro, líneas finas ───────────── */
+body[data-fx=b-oled] #bg{background:#000;animation:none}
+body[data-theme=b-oled] .t{background:#0b0b0b;border:1px solid #ffffff26;border-radius:18px;box-shadow:none}
+body[data-theme=b-oled] .t:not(.s) img{filter:grayscale(.85) brightness(.75)}
+body[data-theme=b-oled] .t.s{border-color:#fff;box-shadow:0 0 0 1px #fff,0 0 46px #ffffff26}
+body[data-theme=b-oled] #title{font-weight:300;font-size:34px;letter-spacing:.06em}
+body[data-theme=b-oled] #sub{font-size:18px;opacity:.45}

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>FPS</title>
+<!-- Contador de FPS: una ventana transparente, siempre encima, que no recibe ratón ni teclado. fps.js le manda el tamaño y el número con window.__s(tamaño, texto) -->
+<style>
+html,body{margin:0;height:100%;background:transparent;overflow:hidden;user-select:none;cursor:default;pointer-events:none}
+body{--s:1;display:flex;justify-content:flex-end;align-items:flex-start;font-family:"Segoe UI Variable Display","Segoe UI",system-ui,sans-serif}
+#f{display:flex;align-items:baseline;gap:calc(var(--s)*8px);padding:calc(var(--s)*2px) calc(var(--s)*8px);color:#fff;opacity:0;transition:opacity .15s;
+  text-shadow:0 0 calc(var(--s)*1px) #000,0 calc(var(--s)*1px) calc(var(--s)*3px) rgba(0,0,0,.95),0 0 calc(var(--s)*12px) rgba(0,0,0,.75)}
+#f.on{opacity:1}
+#n{font-weight:700;font-size:calc(var(--s)*64px);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+#u{font-weight:600;font-size:calc(var(--s)*20px);line-height:1;letter-spacing:.08em;opacity:.85}
+</style></head>
+<body>
+<div id="f"><span id="n"></span><span id="u">FPS</span></div>
+<script>
+window.__s = function (s, t) {
+  document.body.style.setProperty('--s', s);
+  document.getElementById('n').textContent = t || '';
+  document.getElementById('f').className = t ? 'on' : '';
+};
+</script>
+</body></html>

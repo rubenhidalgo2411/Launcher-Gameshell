@@ -1,0 +1,46 @@
+/* GameShell · lo nuevo de esta versión: tipo de letra propio, «Intro para jugar» en cualquier estilo, barras «Nada», ampliación tipo Dock,
+   tarjetas nuevas del selector inferior y pruebas de sonido. Va el último para que sus reglas manden sobre las de cada estilo. */
+
+/* ───────────── tipo de letra (Apariencia → Tipo de letra) ───────────── */
+/* body.ff solo existe cuando se ha elegido uno; «La del estilo» no toca nada. Los iconos de teclas de la barra de abajo se quedan con su letra */
+body.ff{font-family:var(--ff)}
+
+/* ───────────── barras «Nada» ───────────── */
+#hint.hb-none,#top.tb-none{display:none}
+
+/* ───────────── «Intro para jugar» ─────────────
+   body[data-play] = text | btn | cta | none (ya resuelto). El del estilo de siempre (btn en PS5, cta en los b-*) se dibuja con el CSS de su estilo;
+   en cualquier otro caso app.js pone body.pplay y coloca el botón justo debajo del nombre (--ppx / --ppy / --ppt). */
+body[data-play=none] #acts,body[data-play=none] #cta,body[data-play=text] #acts,body[data-play=text] #cta{display:none}
+body[data-play=btn] #cta,body[data-play=cta] #acts{display:none}
+body[data-play=btn] #acts{display:flex}
+body[data-play=cta] #cta{display:inline-flex}
+body.pplay #acts,body.pplay #cta{position:fixed;left:var(--ppx,50%);top:var(--ppy,80%);transform:translateX(var(--ppt,-50%));margin:0;z-index:2}
+body.pplay #acts{gap:calc(14*var(--u));align-items:center}
+body.pplay #acts button{height:calc(60*var(--u));border-radius:999px;border:1px solid #ffffff40;background:#ffffff24;backdrop-filter:blur(14px);color:#fff;font:inherit;font-weight:600;font-size:calc(26*var(--u));cursor:pointer;transition:background .15s,color .15s}
+body.pplay #play{width:calc(290*var(--u))}
+body.pplay #more{width:calc(60*var(--u));padding-bottom:calc(6*var(--u));letter-spacing:.06em}
+body.pplay #acts button:hover{background:#fff;color:#0b1020}
+body.pplay #cta{padding:calc(12*var(--u)) calc(30*var(--u));font-size:calc(22*var(--u));gap:calc(10*var(--u))}
+body.pplay #cta svg{width:calc(22*var(--u));height:calc(22*var(--u))}
+#cta{cursor:pointer}
+body[data-theme^=b-]:not([data-theme=b-ps5])[data-play=cta] #cta{margin-top:22px}   /* en los b-* la pastilla va dentro del bloque del nombre */
+
+/* ───────────── ampliación tipo Dock ───────────── */
+/* mientras se amplía, los iconos se mueven con el puntero: sin la transición lenta de siempre (las pulsaciones siguen deslizando, pero rápido) */
+#row.dk .t{transition:transform .14s cubic-bezier(.2,.8,.2,1),opacity .3s,box-shadow .3s}
+#row.nt.dk .t{transition:none}
+
+/* ───────────── selector inferior con más apartados ───────────── */
+#ttabs{flex-wrap:wrap;gap:calc(8*var(--u))}
+.tt{padding:calc(6*var(--u)) calc(15*var(--u));font-size:calc(16*var(--u))}
+.tc.fnt .tl{font-size:calc(25*var(--u));font-weight:500;line-height:1.15}
+.tc.fnt .tl small{font-family:"Segoe UI",system-ui,sans-serif;font-size:calc(12.5*var(--u))}
+.tc.sw .tl{text-shadow:0 1px 8px #000}
+.tc.sw{border:1px solid #ffffff22}
+
+/* ───────────── pruebas de sonido: ▶ de cada fila (con el ratón) ───────────── */
+#mn p .tp{flex:none;display:inline-grid;place-items:center;width:1.5em;height:1.5em;margin-left:14px;border-radius:50%;font-size:.7em;line-height:1;background:#ffffff1f;opacity:.85}
+#mn p .tp:hover{background:#ffffff40;opacity:1}
+#mn p.s .tp{background:#0b102024}
+#mn p.s .tp:hover{background:#0b102040}

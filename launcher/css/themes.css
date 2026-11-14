@@ -1,0 +1,111 @@
+/* GameShell · estilos de apariencia. Se activan con body[data-theme=...] (app.js: THEMES).
+   Medidas pensadas para 1080p y escaladas con --u (alto de pantalla / 1080), así se ven igual en cualquier resolución. */
+/* NOTA: las reglas del FONDO animado de cada estilo (#bg y sus decorados dentro de #fx) cuelgan de [data-fx=…] y no de [data-theme=…]: así se puede usar el fondo de un estilo con la colocación de otro (app.js: FX). */
+
+/* ───────────── PS5 ───────────── */
+[data-theme=ps5]{--c:#4f46e5}
+[data-fx=ps5] #bg{inset:0;animation:none;background:linear-gradient(180deg,#05070f,#080c1c)}
+[data-theme=ps5] #hero{display:block}
+[data-theme=ps5] .h{position:absolute;inset:0;opacity:0;transition:opacity .7s}
+[data-theme=ps5] .h.on{opacity:1}
+[data-theme=ps5] .h::before{content:'';position:absolute;inset:0;background:
+  radial-gradient(75vw 90vh at 74% 38%,color-mix(in srgb,var(--hc) 66%,transparent),transparent 72%),
+  radial-gradient(50vw 60vh at 100% 100%,color-mix(in srgb,var(--hc) 38%,#15104d),transparent 70%)}
+[data-theme=ps5] .h::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#05070fe0 0,#05070f66 34%,transparent 62%),linear-gradient(0deg,#05070ff0 0,transparent 40%),linear-gradient(180deg,#05070fb0 0,transparent 26%)}
+[data-theme=ps5] .h img{position:absolute;z-index:1;right:calc(300*var(--u));top:calc(250*var(--u));width:calc(430*var(--u));height:calc(430*var(--u));object-fit:contain;filter:drop-shadow(0 0 calc(70*var(--u)) color-mix(in srgb,var(--hc) 75%,transparent))}
+[data-theme=ps5] .h.cv img{right:0;top:0;width:72vw;height:100%;object-fit:cover;filter:none;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 40%);mask-image:linear-gradient(90deg,transparent 0,#000 40%)}
+[data-theme=ps5] .h.ni img{display:none}
+[data-theme=ps5] .h .g{position:absolute;z-index:1;right:calc(330*var(--u));top:calc(270*var(--u));width:calc(400*var(--u));height:calc(400*var(--u));opacity:.3}
+[data-theme=ps5] .h .g svg{width:100%;height:100%;stroke:#fff;fill:none;stroke-width:.7}
+[data-theme=ps5] .t{border-radius:calc(11*var(--u));background:linear-gradient(160deg,color-mix(in srgb,var(--k) 52%,#1c2236),color-mix(in srgb,var(--k) 18%,#0b0e1a));box-shadow:0 calc(8*var(--u)) calc(20*var(--u)) #0008}
+[data-theme=ps5] .t img{width:68%;height:68%}
+[data-theme=ps5] .t.s{box-shadow:0 0 0 calc(2.4*var(--u)) #fff,0 0 0 calc(5*var(--u)) #ffffff2e,0 calc(14*var(--u)) calc(36*var(--u)) #0009}
+[data-theme=ps5] .t[data-a]::after{display:none}
+[data-theme=ps5] .t[data-h]::before{font-size:calc(10*var(--u));top:calc(5*var(--u));padding:1px calc(7*var(--u))}
+[data-theme=ps5] #tname{display:block;position:fixed;left:calc(292*var(--u) + var(--tnx,0px));top:calc(238*var(--u) + var(--tny,0px));font-size:calc(27*var(--u));opacity:.9;white-space:nowrap;text-shadow:0 2px 10px #000a}
+[data-theme=ps5] #title{left:calc(172*var(--u));right:auto;top:calc(480*var(--u));width:calc(1040*var(--u));height:calc(250*var(--u));display:flex;align-items:flex-end;text-align:left;font-size:calc(84*var(--u));font-weight:700;line-height:1.03;letter-spacing:-.01em;text-shadow:0 4px 30px #000b;text-wrap:balance}
+[data-theme=ps5] #sub{left:calc(172*var(--u));right:auto;top:calc(748*var(--u));width:calc(1000*var(--u));text-align:left;font-size:calc(29*var(--u));opacity:.8}
+[data-theme=ps5] #acts{display:flex;position:fixed;left:calc(172*var(--u));top:calc(826*var(--u));gap:calc(18*var(--u));align-items:center}
+[data-theme=ps5] #acts button{height:calc(70*var(--u));border-radius:999px;border:1px solid #ffffff40;background:#ffffff24;backdrop-filter:blur(14px);color:#fff;font:inherit;font-weight:600;cursor:pointer;transition:background .15s,color .15s}
+[data-theme=ps5] #play{width:calc(337*var(--u));font-size:calc(30*var(--u))}
+[data-theme=ps5] #more{width:calc(70*var(--u));font-size:calc(34*var(--u));letter-spacing:.06em;padding-bottom:calc(8*var(--u))}
+[data-theme=ps5] #acts button:hover{background:#fff;color:#0b1020}
+
+/* ───────────── PS3 · barra de iconos con ondas de seda ───────────── */
+[data-theme=ps3]{--c:#2b8cff}
+[data-fx=ps3] #bg{inset:0;animation:none;background:linear-gradient(180deg,#031221 0%,#06375f 50%,#04243f 100%)}
+[data-fx=ps3] #bg::after{content:'';position:absolute;inset:0;background:radial-gradient(55vw 38vh at 30% 42%,#9fd8ff30,transparent 70%)}
+[data-fx=ps3] #wv{position:absolute;inset:0;width:100%;height:100%}
+[data-theme=ps3] .t{border-radius:calc(26*var(--u));background:linear-gradient(160deg,#ffffff40,#ffffff12);border:1px solid #ffffff66;box-shadow:0 calc(10*var(--u)) calc(30*var(--u)) #0006,inset 0 1px 0 #ffffff66}
+[data-theme=ps3] .t img{filter:drop-shadow(0 calc(4*var(--u)) calc(10*var(--u)) #0007)}
+[data-theme=ps3] .t.s{border-color:#fff;box-shadow:0 0 calc(50*var(--u)) color-mix(in srgb,var(--k) 55%,#9fd8ff),0 0 0 1px #fff,inset 0 1px 0 #fff9}
+[data-theme=ps3] .t[data-a]::after{font-size:calc(11*var(--u));bottom:calc(6*var(--u));padding:1px calc(8*var(--u))}
+[data-theme=ps3] .t[data-h]::before{font-size:calc(11*var(--u));top:calc(6*var(--u));padding:1px calc(8*var(--u))}
+[data-theme=ps3] #title{left:calc(30vw - (300*var(--u)));right:auto;width:calc(600*var(--u));top:calc(40vh + (124*var(--u)));font-size:calc(40*var(--u));font-weight:500;text-shadow:0 2px 14px #0009}
+[data-theme=ps3] #sub{left:calc(30vw - (300*var(--u)));right:auto;width:calc(600*var(--u));top:calc(40vh + (182*var(--u)));font-size:calc(24*var(--u));opacity:.75}
+
+/* ───────────── PS2 · torres azules ───────────── */
+[data-theme=ps2]{--c:#2f6bff}
+[data-fx=ps2] #bg{inset:0;animation:none;background:radial-gradient(90vw 60vh at 50% 115%,#14369a77,transparent 70%),linear-gradient(180deg,#00010a,#010618 58%,#020a2a)}
+[data-theme=ps2] .t{border-radius:calc(14*var(--u));background:linear-gradient(160deg,#7fb0ff4d,#1d3fb61f 60%,#0a1a6620);border:1px solid #bcd6ff80;box-shadow:0 0 calc(34*var(--u)) #3b82ff44,inset 0 0 calc(28*var(--u)) #9cc4ff26}
+[data-theme=ps2] .t img{filter:drop-shadow(0 0 calc(12*var(--u)) #7fb0ff99)}
+[data-theme=ps2] .t.s{border-color:#fff;box-shadow:0 0 0 1px #fff,0 0 calc(70*var(--u)) #6aa8ffaa,inset 0 0 calc(34*var(--u)) #bfd8ff55}
+[data-theme=ps2] .t[data-a]::after{font-size:calc(12*var(--u));bottom:calc(8*var(--u))}
+[data-theme=ps2] #title{top:calc(55vh - (238*var(--u)));font-size:calc(46*var(--u));font-weight:300;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 0 calc(26*var(--u)) #5c9bff}
+[data-theme=ps2] #sub{top:calc(55vh + (170*var(--u)));font-size:calc(22*var(--u));letter-spacing:.08em;opacity:.65}
+
+/* ───────────── Neón ───────────── */
+[data-theme=neon]{--c:#ff4fa3}
+[data-fx=neon] #bg{inset:0;animation:none;background:radial-gradient(60vw 60vh at 50% 48%,color-mix(in srgb,var(--c) 16%,transparent),transparent 70%),#030308}
+[data-fx=neon] .sh{position:absolute;width:calc(270*var(--u));height:calc(270*var(--u));stroke:var(--sc);fill:none;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 calc(8*var(--u)) var(--sc)) drop-shadow(0 0 calc(34*var(--u)) var(--sc));opacity:.72;animation:fl 9s ease-in-out infinite alternate}
+[data-fx=neon] .sh.s0{left:57%;top:3%}
+[data-fx=neon] .sh.s1{left:77%;top:73%;animation-delay:-3s}
+[data-fx=neon] .sh.s2{left:27%;top:74%;animation-delay:-6s}
+[data-fx=neon] .sh.s3{left:16%;top:3%;animation-delay:-2s}
+@keyframes fl{to{transform:translateY(-3vh) rotate(7deg)}}
+[data-theme=neon] .t{border-radius:calc(26*var(--u));background:linear-gradient(160deg,#0d0d1c,#07070f);border:2px solid var(--k);box-shadow:0 0 calc(22*var(--u)) color-mix(in srgb,var(--k) 55%,transparent),inset 0 0 calc(24*var(--u)) color-mix(in srgb,var(--k) 28%,transparent)}
+[data-theme=neon] .t.s{border-color:#fff;box-shadow:0 0 calc(8*var(--u)) #fff,0 0 calc(60*var(--u)) var(--k),inset 0 0 calc(34*var(--u)) color-mix(in srgb,var(--k) 45%,transparent)}
+[data-theme=neon] #title{top:calc(42% + (215*var(--u)));font-size:calc(58*var(--u));font-weight:800;letter-spacing:.05em;text-shadow:0 0 calc(12*var(--u)) var(--c),0 0 calc(40*var(--u)) var(--c)}
+[data-theme=neon] #sub{top:calc(42% + (290*var(--u)));opacity:.7}
+
+/* ───────────── Aurora · cristal ───────────── */
+[data-theme=aurora]{--c:#7c5cff}
+[data-fx=aurora] #bg{inset:0;animation:none;background:linear-gradient(160deg,#0a1030,#15123c 50%,#0b1f3b)}
+[data-fx=aurora] .ab{position:absolute;border-radius:50%;filter:blur(calc(90*var(--u)));opacity:.8;mix-blend-mode:screen}
+[data-fx=aurora] .a1{width:62vw;height:62vh;left:-12%;top:-18%;background:#16c6b6;animation:ab1 22s ease-in-out infinite alternate}
+[data-fx=aurora] .a2{width:56vw;height:56vh;right:-14%;top:4%;background:#7c5cff;animation:ab2 27s ease-in-out infinite alternate}
+[data-fx=aurora] .a3{width:52vw;height:50vh;left:18%;bottom:-28%;background:#ff5fa8;animation:ab1 31s ease-in-out infinite alternate-reverse}
+[data-fx=aurora] .a4{width:34vw;height:34vh;left:56%;bottom:2%;background:#3b82f6;animation:ab2 24s ease-in-out infinite alternate-reverse}
+@keyframes ab1{to{transform:translate(9vw,7vh) scale(1.18)}}
+@keyframes ab2{to{transform:translate(-8vw,9vh) scale(.88)}}
+[data-theme=aurora] .t{border-radius:calc(46*var(--u));background:linear-gradient(150deg,#ffffff30,#ffffff0e);border:1px solid #ffffff4d;backdrop-filter:blur(calc(22*var(--u))) saturate(1.3);box-shadow:0 calc(18*var(--u)) calc(50*var(--u)) #0005,inset 0 1px 0 #ffffff66}
+[data-theme=aurora] .t.s{box-shadow:0 0 0 2px #ffffffd0,0 calc(24*var(--u)) calc(60*var(--u)) #0007,0 0 calc(90*var(--u)) color-mix(in srgb,var(--k) 60%,transparent),inset 0 1px 0 #fff8}
+[data-theme=aurora] #title{top:calc(40% + (244*var(--u)));font-size:calc(60*var(--u));font-weight:300;letter-spacing:.01em}
+[data-theme=aurora] #sub{top:calc(40% + (318*var(--u)))}
+
+/* ───────────── Synthwave ───────────── */
+[data-theme=synth]{--c:#ff3cac}
+[data-fx=synth] #bg{inset:0;animation:none;background:linear-gradient(180deg,#0d0126 0%,#2a0a5e 38%,#a3157a 62%,#ff6a3d 74%,#14032b 74.2%,#0a0118 100%)}
+[data-fx=synth] .sun{position:absolute;left:50%;top:calc(74% - (300*var(--u)));width:calc(450*var(--u));height:calc(450*var(--u));margin-left:calc(-225*var(--u));border-radius:50%;background:linear-gradient(180deg,#fff27a 0%,#ff9a3c 40%,#ff2f92 75%,#a30fbf 100%);-webkit-mask-image:linear-gradient(180deg,#000 0 52%,transparent 52% 56%,#000 56% 66%,transparent 66% 71%,#000 71% 80%,transparent 80% 86%,#000 86% 100%);mask-image:linear-gradient(180deg,#000 0 52%,transparent 52% 56%,#000 56% 66%,transparent 66% 71%,#000 71% 80%,transparent 80% 86%,#000 86% 100%);filter:drop-shadow(0 0 calc(40*var(--u)) #ff3cac99)}
+[data-fx=synth] .floor{position:absolute;left:0;right:0;top:74%;bottom:0;background:linear-gradient(180deg,#1a0536,#0a0118 40%);overflow:hidden}
+[data-fx=synth] .floor::before{content:'';position:absolute;left:0;right:0;top:0;height:2px;z-index:1;background:#ffb0ec;box-shadow:0 0 calc(18*var(--u)) calc(4*var(--u)) #ff3cd8}
+[data-fx=synth] .grid{position:absolute;left:-60%;right:-60%;top:0;bottom:-60%;transform-origin:50% 0;transform:perspective(calc(520*var(--u))) rotateX(62deg);background:repeating-linear-gradient(90deg,#ff3cd8 0 2px,transparent 2px calc(96*var(--u))),repeating-linear-gradient(0deg,#ff3cd8 0 2px,transparent 2px calc(96*var(--u)));animation:gr 1.5s linear infinite;-webkit-mask-image:linear-gradient(180deg,transparent,#000 16%);mask-image:linear-gradient(180deg,transparent,#000 16%)}
+@keyframes gr{from{background-position:0 0,0 0}to{background-position:0 0,0 calc(96*var(--u))}}
+[data-theme=synth] .t{border-radius:calc(20*var(--u));background:linear-gradient(160deg,#1c0a3ccc,#0a0420cc);border:2px solid #ff3cd8;box-shadow:0 0 calc(20*var(--u)) #ff3cd8aa,inset 0 0 calc(20*var(--u)) #ff3cd844}
+[data-theme=synth] .t.s{border-color:#4df3ff;box-shadow:0 0 calc(34*var(--u)) #4df3ffcc,0 0 calc(70*var(--u)) #ff3cd8aa,inset 0 0 calc(24*var(--u)) #4df3ff44}
+[data-theme=synth] #title{top:calc(40% - (236*var(--u)));font-size:calc(58*var(--u));font-weight:800;font-style:italic;letter-spacing:.02em;background:linear-gradient(180deg,#fff,#ffd0f2 50%,#ff4fd8);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 calc(14*var(--u)) #ff3cac)}
+[data-theme=synth] #sub{top:calc(40% - (158*var(--u)));color:#ffd0f2}
+
+/* ───────────── torres PS2 (las usan el estilo PS2 y su intro) ───────────── */
+.tws{position:absolute;inset:0;overflow:hidden}
+.tw{position:absolute;bottom:-4vh;left:var(--x);width:var(--w);height:var(--h);border-radius:2px 2px 0 0;
+  background:linear-gradient(180deg,#b4dcff8c,#4678ff47 42%,#14289f10);box-shadow:inset 1px 0 #c8e1ff59,inset -1px 0 #78aaff33,0 0 36px #4678ff40;
+  animation:twIn 2.4s var(--dl) both,twDrift var(--sp) ease-in-out calc(var(--dl) + 2.4s) infinite alternate}
+.tw.d0{opacity:.38;filter:blur(1.6px)}
+.tw.d1{opacity:.62}
+.tw.d2{opacity:.9;filter:blur(.5px)}
+@keyframes twIn{from{transform:translateY(62vh);opacity:0}}
+@keyframes twDrift{to{transform:translateY(-3.5vh)}}
+.mist{position:absolute;inset:0;background:radial-gradient(70vw 30vh at 50% 100%,#3b82ff45,transparent 70%)}
+.mote{position:absolute;left:var(--x);bottom:-2vh;width:var(--z);height:var(--z);border-radius:50%;background:#cfe0ff;box-shadow:0 0 8px #9cc4ff;opacity:0;animation:mote var(--sp) linear var(--dl) infinite}
+@keyframes mote{0%{transform:translateY(0);opacity:0}15%{opacity:.8}100%{transform:translateY(-95vh);opacity:0}}

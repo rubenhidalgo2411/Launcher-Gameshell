@@ -1,0 +1,24 @@
+/* GameShell · fuentes incluidas (todas con licencia SIL Open Font License 1.1, ver assets/fuentes/LICENCIAS.txt). Solo el alfabeto latino (vale para español).
+   Se usan desde Apariencia → Tipo de letra. Si borras alguna con «Eliminar definitivamente», su archivo desaparece de assets/fuentes y ya no sale en la lista. */
+@font-face{font-family:"Orbitron";src:url("../assets/fuentes/orbitron.woff2") format("woff2");font-weight:400 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Exo 2";src:url("../assets/fuentes/exo2.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Oxanium";src:url("../assets/fuentes/oxanium.woff2") format("woff2");font-weight:200 800;font-style:normal;font-display:swap}
+@font-face{font-family:"Space Grotesk";src:url("../assets/fuentes/space-grotesk.woff2") format("woff2");font-weight:300 700;font-style:normal;font-display:swap}
+@font-face{font-family:"Montserrat";src:url("../assets/fuentes/montserrat.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Inter";src:url("../assets/fuentes/inter.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Nunito";src:url("../assets/fuentes/nunito.woff2") format("woff2");font-weight:200 1000;font-style:normal;font-display:swap}
+@font-face{font-family:"Quicksand";src:url("../assets/fuentes/quicksand.woff2") format("woff2");font-weight:300 700;font-style:normal;font-display:swap}
+@font-face{font-family:"Comfortaa";src:url("../assets/fuentes/comfortaa.woff2") format("woff2");font-weight:300 700;font-style:normal;font-display:swap}
+@font-face{font-family:"Cinzel";src:url("../assets/fuentes/cinzel.woff2") format("woff2");font-weight:400 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Playfair Display";src:url("../assets/fuentes/playfair.woff2") format("woff2");font-weight:400 900;font-style:normal;font-display:swap}
+@font-face{font-family:"Rajdhani";src:url("../assets/fuentes/rajdhani-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Rajdhani";src:url("../assets/fuentes/rajdhani-600.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"Rajdhani";src:url("../assets/fuentes/rajdhani-700.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"Chakra Petch";src:url("../assets/fuentes/chakra-petch-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Chakra Petch";src:url("../assets/fuentes/chakra-petch-600.woff2") format("woff2");font-weight:600;font-style:normal;font-display:swap}
+@font-face{font-family:"Chakra Petch";src:url("../assets/fuentes/chakra-petch-700.woff2") format("woff2");font-weight:700;font-style:normal;font-display:swap}
+@font-face{font-family:"Audiowide";src:url("../assets/fuentes/audiowide-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Michroma";src:url("../assets/fuentes/michroma-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Press Start 2P";src:url("../assets/fuentes/press-start-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Share Tech Mono";src:url("../assets/fuentes/share-tech-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:"Bebas Neue";src:url("../assets/fuentes/bebas-400.woff2") format("woff2");font-weight:400;font-style:normal;font-display:swap}

@@ -1,0 +1,10 @@
+{
+  "name": "gameshell",
+  "version": "2.1.0",
+  "description": "GameShell: un solo launcher con todo lo de actualizado y actualizacion. Aqui solo se instala Electron.",
+  "private": true,
+  "scripts": {
+    "start": "electron launcher --dev"
+  },
+  "devDependencies": { "electron": "latest" }
+}

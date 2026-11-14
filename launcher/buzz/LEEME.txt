@@ -1,0 +1,69 @@
+﻿BuzzActivar - Mandos Buzz! inalámbricos (los del "pincho") en Windows + PCSX2
+==============================================================================
+
+¿QUÉ PROBLEMA RESUELVE?
+Windows reconoce el pincho al enchufarlo, pero el pincho no empieza a hablar con
+los mandos hasta que el PC le envía un pequeño informe HID (el de las luces). La
+PS2/PS3 lo hace sola; en un PC hay que hacerlo a mano (por ejemplo con
+SimpleHIDWrite). BuzzActivar lo hace automáticamente cada vez que enchufas el
+pincho. Después Windows ve los Buzz como un mando de juego y ya puedes mapearlos
+en PCSX2.
+
+IMPORTANTE: extrae la carpeta del .zip antes de usarla (no ejecutes los .bat
+desde dentro del zip).
+
+
+INSTALACIÓN (solo una vez)
+  1. Instala Python 3 desde https://www.python.org/downloads/
+     (marca la casilla "Add python.exe to PATH").
+  2. Doble clic en  1_Instalar.bat
+
+
+USO
+  1. Doble clic en  2_Iniciar.bat  y deja la ventana abierta (puedes minimizarla).
+  2. Enchufa el pincho: saldrá "Receptor detectado" y sonará un pitido.
+     (Da igual si lo enchufas antes o después de abrir el programa.)
+  3. Enciende los mandos. En el modelo que describe la comunidad de PCSX2:
+     botón de encendido hacia arriba hasta que parpadee el botón rojo y se quede
+     fija la lucecita azul.
+  4. Si no se enlazan, mantén pulsado el botón "Bind" del pincho hasta que los
+     mandos parpadeen. Ya enlazados, el botón rojo de cada mando se queda
+     encendido.
+  5. Pulsa un botón en cada mando: en la ventana saldrá "Mando 1: ROJO", etc.
+     Así sabes que el PC los recibe. También puedes verlo en Windows:
+     Win+R, escribir joy.cpl, y abrir las Propiedades del Buzz.
+  6. Abre PCSX2.
+
+
+MAPEAR EN PCSX2 (solo la primera vez; PCSX2 lo recuerda)
+  1. PCSX2 > Ajustes (Settings) > Mandos (Controllers).
+  2. Deja activada la fuente "SDL". Si PCSX2 no reacciona al pulsar los Buzz,
+     activa también "DInput" (solo Windows).
+  3. En USB Port 1 elige el tipo "Buzz Controller".
+  4. En "Player 1" haz clic en "Red" y pulsa el botón rojo del mando 1. Repite
+     con Blue, Orange, Green y Yellow.
+  5. Haz lo mismo con Player 2, 3 y 4 usando los otros mandos.
+  Si algún nombre de color de BuzzActivar no coincide con el color físico, no
+  pasa nada: en PCSX2 manda el botón que pulses.
+
+
+ARRANQUE AUTOMÁTICO (opcional)
+  Doble clic en 3_Autoarranque.bat y BuzzActivar se abrirá solo (minimizado) al
+  iniciar sesión en Windows. Vuelve a ejecutarlo para desactivarlo.
+
+
+SI ALGO NO FUNCIONA
+  - No detecta el pincho: abre 4_Diagnostico.bat. Debe salir una línea marcada
+    "<== Buzz" (normalmente 054C:1000). Si tu pincho sale con otros números,
+    arranca con:  2_Iniciar.bat --vid XXXX --pid XXXX
+  - "No puedo abrirlo": cierra otros programas que usen el pincho
+    (SimpleHIDWrite, etc.).
+  - Sale "Receptor detectado" pero los mandos no se enlazan: apágalos, vuelve a
+    encenderlos y mantén pulsado Bind en el pincho.
+  - Si las pulsaciones no salen en la ventana, arranca con  2_Iniciar.bat --crudo
+    para ver los bytes en bruto que llegan.
+  - Otras opciones:  --sin-luces  (no enciende las luces rojas)
+                     --sin-sonido (sin pitidos)
+  - Windows puede avisar con SmartScreen al abrir un .bat descargado: "Más
+    información" > "Ejecutar de todas formas". Los .bat y el .py son texto plano:
+    puedes abrirlos con el Bloc de notas para ver qué hacen.
