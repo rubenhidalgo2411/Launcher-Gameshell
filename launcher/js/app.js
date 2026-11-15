@@ -453,6 +453,7 @@ function opts(it, i0 = 0) {
     ['Resolución de pantalla<small>sin salir a Windows</small>', () => Mej.screenMenu(), 'sub', null, 'res'],
     [`Contador de FPS<small>${UI.fpsOn ? 'activado' : 'apagado'}</small>`, () => Mej.fpsMenu(), 'sub', null, 'fps'],
     [`Mandos Buzz<small>${UI.buzzOn === false ? 'apagados' : 'se activan solos'}</small>`, () => Mej.buzzMenu(), 'sub', null, 'buzz'],
+    ['Buscar actualizaciones<small>desde GitHub</small>', () => GSUpd.menu(), 'sub', null, 'upd'],
     ['Modo Juego', gameMode], ['Cancelar']);
   openMenu(it.t === 'game' ? it.name : 'Opciones', L, i0);
 }
@@ -1069,6 +1070,7 @@ function openAppearance() {
   appearance('theme', 'apr');           // «Volver» lleva a Opciones, sobre la fila de Apariencia
 }
 function act(a) {
+  if (GSUpd.open) return GSUpd.act(a);   // pantalla «Confirmar que deseo esta actualización» (js/actualizar.js): va por encima de la intro y de todo
   if (Intro.active) return Intro.skip();
   if (PSW.active) return PSW.pad();
   if (!live()) return;
@@ -1220,6 +1222,7 @@ Mej.init({
   afterFont: () => { placePlay(); if (items.length) layout(); },                              // otro tipo de letra: lo colocado midiendo el texto se recoloca
   canDock: () => mode === 'home' && !menu && !OSK.isOpen && (!tray || tray.tab === 'dock') && !Intro.active && !PSW.active && live() && items.length > 0
 });
+GSUpd.init({ toast: t => toast(t), openMenu: (...a) => openMenu(...a), closeMenu: () => closeMenu(), opts: (...a) => opts(...a), items: () => items, sel: () => sel, Sound });   // «Buscar actualizaciones» y «Confirmar que deseo esta actualización»
 Mej.fonts.load().then(() => Mej.fonts.apply(UI.font)).catch(() => {});                      // los tipos de letra que importaste
 
 // ───────────────────────── arranque ─────────────────────────
@@ -1236,6 +1239,7 @@ Mej.fonts.load().then(() => Mej.fonts.apply(UI.font)).catch(() => {});          
     const pre = UI.psWait ? PSW.show() : null;         // la Precarga se pone ya, DEBAJO de la intro: al desvanecerse la intro sale ella, sin parpadeo del launcher
     const p = hay ? Intro.play(UI.intro, { name: UI.name, photo: photoUrl(), bphoto: photoUrlB(), snd: UI.introSndSrc, sce: UI.introText }) : Promise.resolve(); // se ve encima mientras la lista se carga debajo
     const lista = refresh();
+    Promise.resolve(lista).then(() => { try { GSUpd.ready(); } catch {} }, () => {});   // si esto es una actualización a prueba, sale «Confirmar que deseo esta actualización» (si esta parte falla, no sale y el arranque seguro vuelve a la anterior)
     if (hay || PSW.active) uncover(false);              // ya hay algo (negro) delante: se quita la cubierta sin que se note
     else { await lista; uncover(true); }                // sin intro ni Precarga: el launcher aparece ya cargado, con un fundido
     await p;

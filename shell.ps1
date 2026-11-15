@@ -1,6 +1,7 @@
 param([Parameter(Mandatory)][ValidateSet('instalar','quitar')][string]$Accion, [string]$Usuario)
 $exe = Join-Path $PSScriptRoot 'node_modules\electron\dist\electron.exe'
 $app = Join-Path $PSScriptRoot 'launcher'
+$boot = Join-Path $PSScriptRoot 'boot'
 $sub = 'Software\Microsoft\Windows NT\CurrentVersion\Winlogon'
 $hive = $null
 if ($Usuario) {
@@ -15,9 +16,14 @@ $k = "$root\$sub"
 if ($Accion -eq 'instalar') {
   if (-not (Test-Path $exe)) { Write-Host 'Falta electron.exe: ejecuta instalar-shell.bat en esta carpeta primero (instala y descarga Electron).'; exit 1 }
   if (-not (Test-Path (Join-Path $app 'main.js'))) { Write-Host ('Falta la carpeta del launcher: {0}' -f $app); exit 1 }
+  # El arranque seguro (carpeta boot) abre el launcher y lo vigila: si una actualizacion no se confirma, vuelve a la version anterior. Sin esa carpeta se abre el launcher directamente.
+  $destino = $app
+  if (Test-Path (Join-Path $boot 'arranque.js')) { $destino = $boot }
   New-Item $k -Force | Out-Null
-  Set-ItemProperty $k Shell ('"{0}" "{1}"' -f $exe, $app)
+  Set-ItemProperty $k Shell ('"{0}" "{1}"' -f $exe, $destino)
   Write-Host 'Listo. Cierra sesion y vuelve a entrar: cargara GameShell en vez del escritorio.'
+  if ($destino -eq $boot) { Write-Host 'Arranque seguro activado: Opciones > Buscar actualizaciones baja la version nueva de GitHub y, si no la confirmas en 30 s, vuelve a la anterior.' }
+  else { Write-Host 'Aviso: no encuentro la carpeta boot, asi que no habra actualizaciones desde el launcher. Copiala junto a launcher y vuelve a ejecutar este archivo.' }
   Write-Host 'Este launcher unico sustituye a "actualizacion" y "actualizado" (los cambios de aspecto estan en Opciones > Apariencia).'
 } else {
   Remove-ItemProperty $k Shell -ErrorAction SilentlyContinue

@@ -50,6 +50,7 @@ Ya no hay dos launchers que cambiar con W×4: todo se elige en **Opciones → Ap
 3. Cierra sesión y vuelve a entrar.
 
 Tus juegos, contraseña, logos, fotos importadas y ajustes se conservan (están en `%APPDATA%\gameshell`).
+**Si es la primera vez con «Buscar actualizaciones»:** copia también la carpeta `boot/` y ejecuta `instalar-shell.bat` (activa el *arranque seguro*). Es la última vez que hace falta actualizar a mano el launcher: a partir de ahí se actualiza desde el propio launcher (ver *Actualizar desde GitHub*).
 Si venías de `actualizacion`, sus ajustes (estilo, intro, fondo, sonido, volumen, nombre) se aprovechan la primera vez.
 Para volver al escritorio normal: `quitar-shell.bat`. Autologin: `autologin-activar.bat` / `autologin-quitar.bat` (sin cambios).
 
@@ -60,7 +61,7 @@ Para volver al escritorio normal: `quitar-shell.bat`. Autologin: `autologin-acti
 | Menú | Qué hay |
 |---|---|
 | **Opciones → Apariencia** (o el botón **Share** del mando) | Estilo · Fondo · Añadir foto de fondo… · Barra inferior · Barra superior · **Tipo de letra** · **Intro para jugar** · **Tamaño de iconos** · **Ampliación al pasar el ratón** · **Brasas · color / altura** (solo con Brasas) · **Texto de arriba a la izquierda** · Intro · **Precarga Post Intro** (con *Exigir el mando*) · Sonidos · **Restaurar lo eliminado** (solo sale si has eliminado algo) |
-| **Opciones** | **Navegador** · **Resolución de pantalla** · **Contador de FPS** · **Mandos Buzz** · **Modo Juego** · (lo de cada juego: abrir al iniciar, **cambiar nombre**, cambiar logo, **foto de la derecha (PS5)**, quitar…) |
+| **Opciones** | **Navegador** · **Resolución de pantalla** · **Contador de FPS** · **Mandos Buzz** · **Buscar actualizaciones** · **Modo Juego** · (lo de cada juego: abrir al iniciar, **cambiar nombre**, cambiar logo, **foto de la derecha (PS5)**, quitar…) |
 | **Esc / ○ → Sistema** | Suspender · Reiniciar · Apagar · Cerrar sesión · Escritorio de Windows · Ajustes del launcher (contraseña, nombre) |
 
 ### Listas largas (intros, fotos…)
@@ -174,6 +175,27 @@ Es lo que se ve bajo el nombre del programa elegido: la frase «Intro para jugar
 **Opciones → Resolución de pantalla.** Muestra **solo los modos que Windows dice que admite tu pantalla principal**: eliges la resolución con `←/→` y, en la fila de abajo, la frecuencia (Hz); **Aplicar** la cambia **en caliente**. Después sale **«¿Mantener esta resolución?»** con una cuenta atrás de 15 s: *Mantener* la guarda (sigue al reiniciar); *Volver a la anterior* —que es la fila marcada por defecto— o no tocar nada la devuelve. Si el launcher se cierra con un cambio sin confirmar, también vuelve. Así, una resolución que tu tele o monitor no enseñe bien no te deja sin imagen.
 Usa las funciones de Windows (`ChangeDisplaySettingsEx`) a través de PowerShell (`launcher/pantalla.ps1`); con varias pantallas cambia la principal.
 
+### Actualizar desde GitHub
+**Opciones → Buscar actualizaciones.** Lo que cambies en el repositorio llega al PC sin descargar ni instalar nada a mano:
+
+1. Cambias algo en GitHub, en la rama que sigue el PC (por defecto `main`).
+2. En el launcher: **Opciones → Buscar actualizaciones** y, si hay algo nuevo, **Instalar y reiniciar**. Descarga solo la carpeta `launcher/`, comprueba que no traiga errores de sintaxis (una errata es la causa más típica de una pantalla negra; si la hay, **no se instala**) y se reinicia con la versión nueva.
+3. Sale **«Confirmar que deseo esta actualización»** con una cuenta atrás de **30 s** (teclado: `Intro`; ratón: clic; mando: ✕). Si todo se ve bien, la confirmas y se queda.
+4. **Si no la confirmas a tiempo vuelve sola a la versión anterior.** Pasa igual si la pantalla se queda en negro, el launcher se cuelga o se cierra, o el PC se apaga o reinicia antes de confirmar. **Volver a la anterior ahora** lo hace al momento.
+
+**Por qué no se queda en negro.** `instalar-shell.bat` pone como shell de Windows el *arranque seguro* (`boot/`), que abre el launcher en un proceso aparte y lo vigila. `boot/` **no se actualiza nunca**, así que sigue funcionando aunque la versión nueva esté rota; es quien cambia las carpetas y quien vuelve atrás. Si algo dentro del propio arranque seguro fallara, abre el launcher directamente, como antes.
+
+**Qué se actualiza.** Solo `launcher/`. Tus juegos, ajustes y fotos importadas están en `%APPDATA%\gameshell`, fuera de esa carpeta, y no se tocan. Lo que hayas metido a mano en `launcher/assets/fondos`, `assets/sonidos`, `assets/fuentes` o `launcher/bin` pasa a la versión nueva. Si cambias `boot/`, `shell.ps1`, los `.bat` o `package.json` de la raíz, o subes la versión de Electron, eso **sí** hay que copiarlo a mano al PC y volver a ejecutar `instalar-shell.bat`. La versión anterior queda en `launcher.previo/` hasta la siguiente actualización.
+
+**Consejos**
+- **Seguridad:** todo lo que subas a la rama que sigue el PC se ejecutará en él, y la cuenta de juegos no tiene contraseña. Activa la verificación en dos pasos en tu cuenta de GitHub.
+- **Rama estable:** en `boot/actualizacion.json` cambia `"rama"` (p. ej. `"estable"`), trabaja en otra rama y mezcla en la estable solo lo que ya has probado.
+- **Si confirmaste una versión que tenía un fallo:** desde el móvil (app o web de GitHub) pulsa **Revert** en ese cambio; la versión buena vuelve a ser la última y, en el PC, *Buscar actualizaciones* instala esa. Los 30 s cubren «se rompe al arrancar»; Revert cubre «parecía bien pero tenía un fallo».
+- Si una versión ya se probó y se deshizo, *Buscar actualizaciones* lo avisa («ya se probó y se deshizo») antes de volver a instalarla.
+- Sin internet no pasa nada: simplemente no encuentra actualizaciones. Si GitHub limita las consultas, prueba dentro de un rato.
+- `%APPDATA%\gameshell\actualizacion\arranque.log` cuenta paso a paso lo que hizo el arranque seguro (qué se puso, qué se deshizo y por qué).
+- Para quitarlo todo y volver al escritorio normal de Windows: `quitar-shell.bat`.
+
 ### W×4
 Pulsar `W` cuatro veces seguidas alterna entre **dos aspectos completos** (estilo + fondo + barras + timbre de menú): el que estés usando y el otro. La primera vez te lleva al de `actualizacion`; la siguiente, de vuelta al tuyo exacto. Es un atajo; si no lo quieres, ignóralo.
 
@@ -222,4 +244,5 @@ Es un reescalado: **mejora mucho los bordes y los bloques, pero no puede inventa
 
 ## Datos (`%APPDATA%\gameshell`)
 `ui.json` (apariencia, volúmenes, lo eliminado…) · `games.json` · `settings.json` (contraseña) · `fondos\` (tus fotos y sus miniaturas) · `fuentes\` (tus tipos de letra) · `bin\` (PresentMon, si lo descargas) · `iconos\` y `logos\` (logos de juegos: se leen los dos formatos) · `carteles\` (las fotos de la derecha de los estilos PS5) · `bloqueo\` (listas del bloqueador de anuncios) · `sonidos\` (opcional: `ps2`, `ps3`, `ps5`, `ps2boot`) · `permiso-fps.txt` y `fps-permiso.json` (informe del último permiso de FPS y cuándo se dio) · `gameshell.log`.
+`actualizacion\\` (estado de las actualizaciones y `arranque.log`, el diario del arranque seguro).
 Si algo falla, mira `gameshell.log`. Para probar sin instalar: `npm install` y luego `npm start` (abre el launcher en ventana).

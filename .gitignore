@@ -1,2 +1,7 @@
 node_modules/
 __pycache__/
+# carpetas de trabajo de las actualizaciones (viven en el PC, junto a launcher/)
+launcher.nuevo/
+launcher.previo/
+launcher.fallido/
+.gs-descarga/

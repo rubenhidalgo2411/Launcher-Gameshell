@@ -1,0 +1,7 @@
+{
+  "name": "gameshell-boot",
+  "version": "1.0.0",
+  "description": "Arranque seguro de GameShell: abre el launcher y, si una actualizacion no se confirma, vuelve a la version anterior. NO se actualiza solo.",
+  "main": "arranque.js",
+  "private": true
+}

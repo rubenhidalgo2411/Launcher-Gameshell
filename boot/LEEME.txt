@@ -1,0 +1,31 @@
+BOOT = EL ARRANQUE SEGURO DE GAMESHELL
+=======================================
+
+Windows abre esta carpeta como shell (electron.exe boot). Ella abre el launcher
+(carpeta ..\launcher) en otro proceso y lo vigila.
+
+POR QUE EXISTE
+  Cuando actualizas el launcher desde GitHub (Opciones > Buscar actualizaciones) la
+  version nueva sale a prueba: tiene 30 s para que confirmes "Confirmar que deseo esta
+  actualizacion". Si no la confirmas (pantalla negra, se cuelga, se cierra, o se reinicia
+  el PC), esta carpeta vuelve sola a la version anterior.
+  Para poder hacerlo, esta carpeta NO SE ACTUALIZA NUNCA con el launcher: si una version
+  nueva estuviera rota, esto seguiria funcionando.
+
+ARCHIVOS
+  arranque.js        el vigilante: abre el launcher, cambia las carpetas y vuelve atras.
+  actualizador.js    mira GitHub, descarga solo launcher/, comprueba que no tenga errores
+                     de sintaxis y cambia las carpetas.
+  actualizacion.json de donde se actualiza: repo, rama y segundos para confirmar.
+  package.json       (para que Electron sepa que arranque.js es el programa)
+
+AJUSTES (actualizacion.json)
+  "repo":     "usuario/repositorio" de GitHub (publico).
+  "rama":     la rama que sigue el PC. Idea: una rama "estable" donde solo mezclas lo ya probado.
+  "segundos": tiempo para confirmar (de 5 a 300; por defecto 30).
+
+SI CAMBIAS ALGO DE ESTA CARPETA
+  No se actualiza desde el launcher. Copiala a mano al PC y ejecuta instalar-shell.bat.
+
+DIARIO
+  %APPDATA%\gameshell\actualizacion\arranque.log

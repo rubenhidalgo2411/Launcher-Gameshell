@@ -264,7 +264,7 @@ function detectShell() {
   const me = path.basename(process.execPath).toLowerCase(), dir = path.basename(__dirname).toLowerCase();
   const q = hive => new Promise(r => execFile('reg', ['query', hive + '\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon', '/v', 'Shell'], { windowsHide: true }, (e, out) => r(e ? '' : String(out).toLowerCase())));
   Promise.all([q('HKCU'), q('HKLM')]).then(([a, b]) => {
-    const own = t => t.includes(me) && t.includes(dir), has = t => /\bshell\s+reg_sz\b/.test(t);
+    const own = t => t.includes(me) && (t.includes(dir) || /\\boot"?\s*$/m.test(t)), has = t => /\bshell\s+reg_sz\b/.test(t);   // electron.exe launcher  ·  o  electron.exe boot (el arranque seguro, que abre este launcher)
     shellMode = own(a) || (!has(a) && own(b));   // el valor de usuario manda sobre el de la máquina
     log('shell de Windows:', shellMode ? 'es el launcher' : 'no es el launcher (no se cierra el escritorio)');
   }).catch(() => {});
@@ -600,6 +600,9 @@ function refit() { // tras cambiar la resolución, la ventana del launcher se vu
 }
 const PANT = Pantalla.create({ log, getWin: () => win, refit });
 const BUZZ = Buzz.create({ log });   // BuzzActivar en segundo plano (buzz.js). No arranca hasta que el launcher avisa de que ya está listo (boot:done)
+// «Buscar actualizaciones» (Opciones): descarga la versión nueva de GitHub y, si no se confirma a tiempo, el arranque seguro (boot/) vuelve a la anterior. Ver actualizar.js
+let ACT = null;
+try { ACT = require('./actualizar').create({ app, ipcMain, getWin: () => win, log, dev: DEV }); } catch (e) { log('actualizaciones: no se pudieron preparar:', e.message); }
 ipcMain.handle('fps:state', () => FPS.state());
 ipcMain.handle('fps:download', () => FPS.download());
 ipcMain.handle('fps:permiso', () => FPS.permission());
@@ -642,6 +645,7 @@ else app.whenReady().then(() => {
   app.on('child-process-gone', (_, d) => log('proceso de Electron caído:', d && d.type, d && d.reason));
   try { if (fs.statSync(LOG()).size > 2e5) fs.writeFileSync(LOG(), ''); } catch {}
   log('inicio', DEV ? '(dev)' : '(shell)');
+  if (ACT) log('actualizaciones:', ACT.resumen());
   globalShortcut.register('Control+Shift+H', home);
   globalShortcut.register('Control+Shift+F', () => { try { FPS.toggle(); } catch (e) { log('FPS:', e.message); } }); // contador de FPS: arrancarlo / ocultarlo dentro de un juego
   try { FPS.configure(uiGet()); } catch (e) { log('FPS:', e.message); }

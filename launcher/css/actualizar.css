@@ -1,0 +1,26 @@
+/* GameShell · pantalla «Confirmar que deseo esta actualización» (js/actualizar.js).
+   Va por encima de todo (también de la cubierta negra #boot) y no depende del estilo elegido: usa el mismo aspecto que los menús (tarjeta oscura, fila elegida en blanco). */
+#upd{position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;background:#000a;backdrop-filter:blur(10px);color:#fff;animation:updin .25s ease-out}
+#upd.out{opacity:0;transition:opacity .25s}
+@keyframes updin{from{opacity:0}}
+#upd .uc{width:min(720px,92vw);padding:36px 40px 30px;border-radius:30px;background:#0e1424;border:1px solid #fff2;box-shadow:0 30px 80px #000a;display:flex;flex-direction:column;gap:14px}
+#upd h2{font-size:30px;font-weight:600}
+#upd .uv{display:flex;flex-direction:column;gap:3px;font-size:21px;opacity:.85}
+#upd .uv b{font-weight:600;font-variant-numeric:tabular-nums}
+#upd .uv span{font-size:17px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#upd .un{display:flex;align-items:baseline;gap:16px;margin-top:8px;font-size:20px;opacity:.9}
+#upd .un b{min-width:2ch;font-size:92px;font-weight:600;line-height:.95;font-variant-numeric:tabular-nums;transition:color .3s}
+#upd .ub{height:8px;border-radius:4px;background:#fff2;overflow:hidden}
+#upd .ub i{display:block;height:100%;border-radius:4px;background:#fff;transform-origin:left;transition:transform .2s linear,background .3s}
+#upd.warn .un b{color:#ffd166}#upd.warn .ub i{background:#ffd166}
+#upd.late .un b{color:#ff6b7a}#upd.late .ub i{background:#ff6b7a}
+#upd .uh{font-size:18px;line-height:1.45;opacity:.68;margin:6px 0 4px;max-width:60ch}
+#upd .ue{font-size:19px;color:#ffd166}
+#upd .ubt{display:block;width:100%;padding:15px 22px;border:0;border-radius:18px;background:transparent;color:inherit;font:inherit;font-size:24px;text-align:left;cursor:pointer}
+#upd .ubt+.ubt{font-size:21px;opacity:.8}
+#upd .ubt.s{background:#fff;color:#0b1020;opacity:1}
+#upd.done .ubt{opacity:.35;pointer-events:none}
+/* aviso de arriba (cómo terminó la última actualización) */
+#updaviso{position:fixed;left:50%;top:44px;transform:translate(-50%,-12px);max-width:min(900px,88vw);padding:16px 30px;border-radius:22px;background:#fff;color:#0b1020;font-size:20px;line-height:1.35;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:2147483601}
+#updaviso.on{opacity:1;transform:translate(-50%,0);pointer-events:auto;cursor:pointer}
+@media (prefers-reduced-motion:reduce){#upd{animation:none}#upd .ub i,#upd .un b{transition:none}}
