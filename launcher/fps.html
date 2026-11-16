@@ -13,11 +13,12 @@ body{--s:1;display:flex;justify-content:flex-end;align-items:flex-start;font-fam
 #u{font-weight:600;font-size:calc(var(--s)*20px);line-height:1;letter-spacing:.08em;opacity:.85}
 </style></head>
 <body>
-<div id="f"><span id="n"></span><span id="u">FPS</span></div>
+<div id="f"><span id="n"></span><span id="u">FPS</span></div><!-- #u (la palabra «FPS») se quita con __s(…, false): queda solo el número -->
 <script>
-window.__s = function (s, t) {
+window.__s = function (s, t, w) {
   document.body.style.setProperty('--s', s);
   document.getElementById('n').textContent = t || '';
+  document.getElementById('u').style.display = w === false ? 'none' : '';
   document.getElementById('f').className = t ? 'on' : '';
 };
 </script>

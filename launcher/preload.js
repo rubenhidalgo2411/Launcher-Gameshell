@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 const call = c => (...a) => ipcRenderer.invoke(c, ...a);
 contextBridge.exposeInMainWorld('api', {
   games: call('games'), add: call('add'), remove: call('remove'), auto: call('auto'), launch: call('launch'),
+  folderNew: call('folder:new'), moveTo: call('move:to'), order: call('order'),
   power: call('power'), desktop: call('desktop'),
   cfg: call('cfg'), bypass: call('bypass'), unbypass: call('unbypass'), locked: call('locked'), check: call('check'), setpw: call('setpw'), setmin: call('setmin'),
   hide: call('hide'), icon: call('icono'), iconOff: call('icono:quitar'), winkey: call('winkey'),

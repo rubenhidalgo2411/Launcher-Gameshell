@@ -82,28 +82,62 @@ function away() { win.setAlwaysOnTop(false); win.minimize(); }
 
 const slow = (p, ms) => Promise.race([p, new Promise(r => setTimeout(() => r(''), ms))]); // un icono lento no debe dejar la lista vacía
 ipcMain.handle('games', async () => {
-  const out = await Promise.all(load().map(async x => {
+  const all = load(), folders = new Set(all.filter(x => x.folder).map(x => x.id));
+  const out = await Promise.all(all.map(async x => {
     const c = (x.customIcon && custom(x.customIcon)) || (x.logo && custom(x.logo, LOGOS_B())) || '';
-    return { ...x, orig: baseName(x.path), icon: c || await slow(icon(x.path), 5000), cover: !!c, hero: heroUrl(x) };
+    if (x.folder) return { ...x, parent: undefined, orig: x.name, icon: c, cover: !!c, hero: '' };           // subconsola: no tiene programa, solo un logo si le pusiste uno
+    const parent = x.parent && folders.has(x.parent) ? x.parent : undefined;                                  // si su subconsola ya no existe, el juego vuelve al inicio
+    return { ...x, parent, orig: x.path ? baseName(x.path) : x.name, icon: c || await slow(icon(x.path), 5000), cover: !!c, hero: heroUrl(x) };
   }));
-  log('lista:', out.length, 'juegos');
+  log('lista:', out.filter(x => !x.folder).length, 'juegos' + (folders.size ? ' · ' + folders.size + ' subconsolas' : ''));
   return out;
 });
-ipcMain.handle('add', async (_, pw) => {
+ipcMain.handle('add', async (_, pw, parent) => {
   if (!auth(pw)) return false;
   const r = await dialog.showOpenDialog(win, { title: 'Añadir juego o script', properties: ['openFile', 'multiSelections'], filters: Lanzar.FILTERS });   // .exe, scripts (.bat .cmd .ps1 .py…), accesos directos… o cualquier archivo
   if (r.canceled) return true;
-  const g = load();
-  for (const p of r.filePaths) if (!g.some(x => x.path === p))
-    g.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: baseName(p), path: p });
+  const g = load(), into = typeof parent === 'string' && g.some(x => x.id === parent && x.folder) ? parent : '';   // parent: la subconsola a la que se añade (vacío = al inicio)
+  for (const p of r.filePaths) {
+    const ya = g.find(x => x.path === p);
+    if (ya) { if (into && ya.parent !== into) ya.parent = into; continue; }                                    // ya estaba en la lista: si se añade desde una subconsola, pasa a ella
+    g.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: baseName(p), path: p, ...(into ? { parent: into } : {}) });
+  }
   save(g);
   return true;
 });
-ipcMain.handle('remove', (_, id) => { log('quitar de la lista', id); const g = load(), x = g.find(a => a.id === id); if (x) { rmIcon(x); rmHero(x); } save(g.filter(a => a.id !== id)); });
-// renombrar: solo cambia el nombre que sale en el launcher (el .exe no se toca). Vacío = vuelve al nombre original
+ipcMain.handle('remove', (_, id) => {
+  log('quitar de la lista', id); const g = load(), x = g.find(a => a.id === id); if (x) { rmIcon(x); rmHero(x); }
+  save(g.filter(a => a.id !== id).map(a => { if (a.parent !== id) return a; const { parent, ...r } = a; return r; }));   // los juegos de una subconsola quitada no se pierden: vuelven al inicio
+});
+// renombrar: solo cambia el nombre que sale en el launcher (el .exe no se toca). Texto vacío = el icono se queda SIN nombre; null = vuelve al nombre original.
+// Una subconsola sí necesita nombre (si se deja vacío se queda como «Subconsola»).
 ipcMain.handle('rename', (_, id, name) => {
   const g = load(), x = g.find(a => a.id === id); if (!x) return false;
-  x.name = (typeof name === 'string' ? name.trim().slice(0, 60) : '') || baseName(x.path); save(g); log('renombrar', id, x.name); return true;
+  if (name === null) x.name = x.folder ? 'Subconsola' : baseName(x.path);
+  else if (typeof name === 'string') x.name = name.trim().slice(0, 60);
+  if (x.folder && !x.name) x.name = 'Subconsola';
+  save(g); log('renombrar', id, JSON.stringify(x.name)); return true;
+});
+// subconsolas (carpetas de juegos): una entrada más de games.json con folder:true; los juegos de dentro llevan parent = su id
+ipcMain.handle('folder:new', (_, name) => {
+  const g = load(), id = 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  g.push({ id, folder: true, name: (typeof name === 'string' ? name.trim().slice(0, 40) : '') || 'Subconsola' });
+  save(g); log('subconsola nueva', id); return id;
+});
+ipcMain.handle('move:to', (_, id, parent) => {            // mete un juego en una subconsola (o lo saca si parent es null)
+  const g = load(), x = g.find(a => a.id === id); if (!x || x.folder) return false;
+  if (parent && !g.some(a => a.id === parent && a.folder)) return false;
+  if (parent) x.parent = parent; else delete x.parent;
+  save(g); log('mover', x.name, '→', parent || 'inicio'); return true;
+});
+// orden: recibe los ids en el orden nuevo y los recoloca en los mismos huecos de games.json (lo que no se menciona —ocultos, otras subconsolas— no se mueve)
+ipcMain.handle('order', (_, ids) => {
+  if (!Array.isArray(ids)) return false;
+  const g = load(), by = new Map(g.map(x => [x.id, x])), want = [...new Set(ids)].filter(i => by.has(i));
+  const slots = []; g.forEach((x, i) => { if (want.includes(x.id)) slots.push(i); });
+  if (slots.length !== want.length) return false;
+  const out = g.slice(); want.forEach((i, k) => { out[slots[k]] = by.get(i); });
+  save(out); return true;
 });
 ipcMain.handle('auto', (_, id, on) => { log('arranque automático', id, !!on); save(load().map(g => g.id === id ? { ...g, auto: !!on } : g)); });
 // abre un programa o script según su tipo (lanzar.js). onExit se llama cuando el proceso termina; con shell.openPath (accesos directos, .url…) no hay proceso que seguir
@@ -119,7 +153,7 @@ function spawnPlan(pl, p, onExit) {
 }
 ipcMain.handle('launch', (_, id) => {
   const g = load().find(x => x.id === id);
-  if (!g) return;
+  if (!g || g.folder) return;                                    // una subconsola no se lanza: solo se abre la carpeta (en el launcher)
   lockDesktop('abrir un juego'); // con la contraseña puesta, un escritorio que se hubiera quedado abierto no puede quedar debajo del juego
   const t = Date.now(), pl = Lanzar.plan(g.path, { hide: false });
   playing = true; log('abrir', g.name, g.path, '(' + pl.kind + ')');
@@ -368,7 +402,7 @@ const UIF = () => path.join(app.getPath('userData'), 'ui.json');
 const UI_DEF = { theme: 'classic', name: 'GameShell', bg: '', intro: 'ps2-boot', introBg: '', sounds: true,
   introSnd: true, vol: 0.6, menuVol: 0.6, menuSnd: 'auto', introSndSrc: 'auto', bar: 'auto', top: 'auto', psWait: true, psReq: false, pswBg: '', alt: null, mode: '',
   introText: '', tile: 1, tabText: 'Juegos', webText: 'Web', webAds: true, webYt: true, webSb: true, webCookies: true, webOsk: true,
-  play: 'auto', font: 'auto', dock: 0, emberY: 0, emberHue: 0, emberSat: 1, fpsOn: false, fpsSize: 1, buzzOn: true, buzzBeep: true,
+  play: 'auto', font: 'auto', dock: 0, emberY: 0, emberHue: 0, emberSat: 1, cosmosY: 0, fpsOn: false, fpsSize: 1, fpsWord: true, buzzOn: true, buzzBeep: true,
   hide: { theme: [], bg: [], intro: [], bar: [], top: [], font: [] }, gone: { theme: [], bg: [], intro: [], bar: [], top: [], font: [] }, v: 0 };   // play: «Intro para jugar» (auto|text|btn|cta|none) · font: tipo de letra · dock: ampliación con el ratón (0-3) · emberY/emberHue/emberSat: altura y color de Brasas · fpsOn/fpsSize: contador de FPS · psReq: la Precarga Post Intro no se salta con teclado/ratón · pswBg: su foto · tile: tamaño de los iconos · tabText/webText: lo de arriba a la izquierda · web*: ajustes del navegador
    // hide: lo que se «elimina» desde el launcher (se puede restaurar) · gone: lo eliminado definitivamente · v: versión de los ajustes
 // la primera vez, si venías de «actualizacion» (prefs.json), se aprovechan sus ajustes: estilos y intros pasan a sus versiones b-*
@@ -403,8 +437,9 @@ const uiGet = () => {
   if (!PLAY_K.includes(c.play)) c.play = 'auto';
   if (!(c.font === 'auto' || (typeof c.font === 'string' && FONT_ID.test(c.font)))) c.font = 'auto';
   if (!Number.isInteger(c.dock) || c.dock < 0 || c.dock > 3) c.dock = 0;
-  for (const k of ['emberY', 'emberHue', 'emberSat', 'fpsSize']) if (typeof c[k] !== 'number' || !isFinite(c[k])) c[k] = UI_DEF[k];
+  for (const k of ['emberY', 'emberHue', 'emberSat', 'cosmosY', 'fpsSize']) if (typeof c[k] !== 'number' || !isFinite(c[k])) c[k] = UI_DEF[k];
   if (typeof c.fpsOn !== 'boolean') c.fpsOn = false;
+  if (typeof c.fpsWord !== 'boolean') c.fpsWord = true;
   for (const k of ['buzzOn', 'buzzBeep']) if (typeof c[k] !== 'boolean') c[k] = true;   // mandos Buzz: activarlos solos / pitido al detectar el pincho
   if ((j.v || 0) < UI_VER) { // primera vez con esta versión
     c.v = UI_VER; c.intro = 'ps2-boot';
@@ -438,9 +473,11 @@ function uiSet(p) {
   if (typeof p.font === 'string' && (p.font === 'auto' || FONT_ID.test(p.font))) c.font = p.font; // tipo de letra (auto = el del estilo)
   if (Number.isInteger(p.dock) && p.dock >= 0 && p.dock <= 3) c.dock = p.dock;                    // ampliación de los iconos con el ratón (0 = apagada)
   if (typeof p.emberY === 'number' && isFinite(p.emberY)) c.emberY = Math.max(-40, Math.min(40, Math.round(p.emberY)));                         // Brasas: altura de los iconos (% de la pantalla; 0 = la de siempre)
+  if (typeof p.cosmosY === 'number' && isFinite(p.cosmosY)) c.cosmosY = Math.max(-40, Math.min(40, Math.round(p.cosmosY)));                     // Cosmos: altura de los iconos (% de la pantalla; 0 = la de siempre)
   if (typeof p.emberHue === 'number' && isFinite(p.emberHue)) c.emberHue = ((Math.round(p.emberHue) % 360) + 360) % 360;                       // Brasas: tono (0 = el naranja de siempre)
   if (typeof p.emberSat === 'number' && isFinite(p.emberSat)) c.emberSat = Math.max(0, Math.min(2, Math.round(p.emberSat * 100) / 100));      // Brasas: intensidad del color
   if (typeof p.fpsOn === 'boolean') c.fpsOn = p.fpsOn;                                           // contador de FPS dentro de los juegos
+  if (typeof p.fpsWord === 'boolean') c.fpsWord = p.fpsWord;                                     // con la palabra «FPS» junto al número o solo el número
   if (typeof p.fpsSize === 'number' && isFinite(p.fpsSize)) c.fpsSize = Math.max(.5, Math.min(3, Math.round(p.fpsSize * 100) / 100));
   if (typeof p.introSndSrc === 'string' && (p.introSndSrc === 'auto' || ISND.test(p.introSndSrc))) c.introSndSrc = p.introSndSrc;
   if (typeof p.mode === 'string' && (p.mode === '' || ID.test(p.mode))) c.mode = p.mode;

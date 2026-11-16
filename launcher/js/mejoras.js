@@ -114,6 +114,27 @@ const Mej = (() => {
   }, { passive: true });
   document.documentElement.addEventListener('mouseleave', () => { dk.x = dk.y = -1e5; dockKick(); });
   addEventListener('blur', () => { dk.x = dk.y = -1e5; dockKick(); });
+  // Foco del ratón: con el puntero sobre un icono de la fila, el aro de foco se va a ese icono (app.js: focusIdx) y el seleccionado con el teclado lo pierde mientras tanto.
+  // No cambia la selección ni mueve la fila: eso solo pasa al hacer clic. Al cruzar el hueco entre dos iconos se espera un instante para que el aro no parpadee.
+  let hov = -1, hovT = 0;
+  const hoverSet = i => {
+    clearTimeout(hovT);
+    if (i >= 0) { if (i !== hov) { hov = i; C.refocus && C.refocus(); } return; }
+    if (hov < 0) return;
+    hovT = setTimeout(() => { hov = -1; C.refocus && C.refocus(); }, 140);
+  };
+  const hoverReset = () => { clearTimeout(hovT); hov = -1; };
+  const hoverLeave = () => { clearTimeout(hovT); if (hov < 0) return false; hov = -1; return true; };   // el teclado o el mando toman el relevo: el foco vuelve al seleccionado
+  // Solo cuenta el MOVIMIENTO REAL del ratón (no «mouseover»): si el puntero se queda parado sobre la fila y los iconos se deslizan por debajo al navegar con teclado o mando,
+  // el navegador avisa igualmente de que ahora hay otro icono bajo el puntero, y el foco se pelearía con el teclado.
+  let lx = -1, ly = -1;
+  $('#row').addEventListener('mousemove', e => {
+    if (e.clientX === lx && e.clientY === ly) return; lx = e.clientX; ly = e.clientY;   // mismas coordenadas = no hay movimiento real
+    const t = e.target.closest && e.target.closest('.t'); if (t && C.canHover && C.canHover()) hoverSet(+t.dataset.i);
+  });
+  $('#row').addEventListener('mouseout', e => { const to = e.relatedTarget; if (!(to && to.closest && to.closest('.t'))) hoverSet(-1); });
+  document.documentElement.addEventListener('mouseleave', () => { if (hov >= 0) { hoverReset(); C.refocus && C.refocus(); } });
+  const hover = () => hov >= 0 && C.canHover && C.canHover() ? hov : -1;
   const dockSet = n => { dk.lvl = Math.max(0, Math.min(3, n | 0)); if (!dk.lvl) dk.want = false; C.layout && C.layout(); dockKick(); };
 
   // ───────────────────────── Brasas: altura y color ─────────────────────────
@@ -131,8 +152,16 @@ const Mej = (() => {
     r.setProperty('--eh', EMB.hue); r.setProperty('--es', EMB.sat); r.setProperty('--ey', (-EMB.y) + 'vh');   // +altura = más arriba
   }
 
+  // ───────────────────────── Cosmos: altura ─────────────────────────
+  // COS.y lo lee la colocación del estilo (app.js: THEMES.cosmos.geom) y el CSS mueve con --cy el nombre y la frase para que bajen con los iconos.
+  const COS = { y: 0 };
+  function applyCosmos(o) {
+    if (o && 'y' in o) COS.y = num(o.y, -40, 40, 0);
+    document.documentElement.style.setProperty('--cy', (-COS.y) + 'vh');   // +altura = más arriba
+  }
+
   // ───────────────────────── selector inferior: tarjetas de lo nuevo ─────────────────────────
-  const TAB_LABEL = { font: 'Tipo de letra', play: 'Intro para jugar', dock: 'Ampliación', emberc: 'Brasas · color', embery: 'Brasas · altura' };
+  const TAB_LABEL = { font: 'Tipo de letra', play: 'Intro para jugar', dock: 'Ampliación', emberc: 'Brasas · color', embery: 'Brasas · altura', cosmosy: 'Cosmos · altura' };
   const EY = [30, 25, 20, 15, 10, 5, 0, -5, -10, -15, -20, -25, -30];
   const styleFont = () => (C.theme && C.theme() === 'cyber') ? 'Bahnschrift' : 'Segoe UI';
   const playNow = () => C.playId ? C.playId('auto') : 'text';
@@ -152,7 +181,7 @@ const Mej = (() => {
     if (tab === 'dock') return { now: String(u.dock || 0), list: DOCK.map(([name, desc], i) => ({ id: String(i), name, desc: desc + (i ? ' · mueve el ratón sobre los iconos' : ''), cls: 'txt' })) };
     if (tab === 'emberc') return { now: String(EMBER_C.findIndex(c => c.hue === (u.emberHue || 0) && c.sat === (u.emberSat === undefined ? 1 : u.emberSat))),
       list: EMBER_C.map((c, i) => ({ id: String(i), name: c.name, desc: c.desc, cls: 'txt sw', bg: `radial-gradient(120% 90% at 50% 112%,${hsl(20 + c.hue, c.sat, .55)} 0%,${hsl(14 + c.hue, c.sat * .9, .26)} 38%,transparent 72%),linear-gradient(180deg,${hsl(14 + c.hue, c.sat * .6, .04)},${hsl(14 + c.hue, c.sat * .8, .12)})` })) };
-    if (tab === 'embery') return { now: String(u.emberY || 0), list: EY.map(v => ({ id: String(v), name: (v > 0 ? '+' : '') + v + ' %', desc: v === 0 ? 'La altura de siempre' : v > 0 ? 'Más arriba' : 'Más abajo', cls: 'txt' })) };
+    if (tab === 'embery' || tab === 'cosmosy') return { now: String((tab === 'embery' ? u.emberY : u.cosmosY) || 0), list: EY.map(v => ({ id: String(v), name: (v > 0 ? '+' : '') + v + ' %', desc: v === 0 ? 'La altura de siempre' : v > 0 ? 'Más arriba' : 'Más abajo', cls: 'txt' })) };
     return null;
   }
   // se ve en directo mientras se desliza (nada se guarda hasta elegir)
@@ -162,6 +191,7 @@ const Mej = (() => {
     else if (tab === 'dock') dockSet(+c.id);
     else if (tab === 'emberc') { const e = EMBER_C[+c.id]; if (e) applyEmber({ hue: e.hue, sat: e.sat }); }
     else if (tab === 'embery') { applyEmber({ y: +c.id }); C.layout && C.layout(); }
+    else if (tab === 'cosmosy') { applyCosmos({ y: +c.id }); C.layout && C.layout(); }
   }
   // lo que se guarda al elegir
   function patch(tab, c) {
@@ -170,16 +200,18 @@ const Mej = (() => {
     if (tab === 'dock') return { dock: +c.id };
     if (tab === 'emberc') { const e = EMBER_C[+c.id]; return { emberHue: e.hue, emberSat: e.sat }; }
     if (tab === 'embery') return { emberY: +c.id };
+    if (tab === 'cosmosy') return { cosmosY: +c.id };
     return {};
   }
   const label = {
     font: () => fontName(C.ui().font), play: () => { const p = C.ui().play; return !p || p === 'auto' ? 'Mismo del estilo' : PLAYS[p].name; },
     dock: () => DOCK[C.ui().dock || 0][0],
     emberc: () => { const u = C.ui(), c = EMBER_C.find(c => c.hue === (u.emberHue || 0) && c.sat === (u.emberSat === undefined ? 1 : u.emberSat)); return c ? c.name : 'Personalizado'; },
-    embery: () => { const y = C.ui().emberY || 0; return y ? (y > 0 ? '+' : '') + y + ' %' : 'La de siempre'; }
+    embery: () => { const y = C.ui().emberY || 0; return y ? (y > 0 ? '+' : '') + y + ' %' : 'La de siempre'; },
+    cosmosy: () => { const y = C.ui().cosmosY || 0; return y ? (y > 0 ? '+' : '') + y + ' %' : 'La de siempre'; }
   };
   // lo guardado vuelve a pantalla (al cancelar el selector o cambiar de apartado)
-  function restore() { const u = C.ui(); applyFont(u.font); dockSet(u.dock || 0); applyEmber({ hue: u.emberHue || 0, sat: u.emberSat === undefined ? 1 : u.emberSat, y: u.emberY || 0 }); }
+  function restore() { const u = C.ui(); applyFont(u.font); dockSet(u.dock || 0); applyEmber({ hue: u.emberHue || 0, sat: u.emberSat === undefined ? 1 : u.emberSat, y: u.emberY || 0 }); applyCosmos({ y: u.cosmosY || 0 }); }
 
   // ───────────────────────── contador de FPS (Opciones) ─────────────────────────
   // El número lo pinta una ventana aparte (fps.html) y lo mide PresentMon (fps.js). Aquí solo se manejan los ajustes y las dos cosas que Windows exige una vez:
@@ -189,16 +221,18 @@ const Mej = (() => {
     const g = gsx(); if (!g) return C.toast('El contador de FPS no está disponible (falta preload-gs.js)');
     let st = st0 || null; if (!st) { try { st = await g.fpsState(); } catch {} }
     st = st || {};
-    const u = C.ui(), back = () => C.opts(C.items()[C.sel()], 'fps'), on = !!u.fpsOn, size = FPS_SZ.reduce((a, b) => Math.abs(b - (u.fpsSize || 1)) < Math.abs(a - (u.fpsSize || 1)) ? b : a, 1);
+    const u = C.ui(), back = () => C.opts(C.items()[C.sel()], 'fps'), on = !!u.fpsOn, word = u.fpsWord !== false, size = FPS_SZ.reduce((a, b) => Math.abs(b - (u.fpsSize || 1)) < Math.abs(a - (u.fpsSize || 1)) ? b : a, 1);
     const reopen = k => fpsMenu(k, st), refetch = k => fpsMenu(k);
     const toggle = async () => { await C.setUI({ fpsOn: !on }); C.Sound.ui('ok'); if (!on && st.win32 && !st.tool) C.toast('Falta el medidor: descárgalo en la fila de abajo'); reopen('on'); };
     const step = d => async () => {
       const i = FPS_SZ.indexOf(size), n = FPS_SZ[(i + d + FPS_SZ.length) % FPS_SZ.length];
       await C.setUI({ fpsSize: n }); g.fpsTest(2500).catch(() => {}); reopen('size');
     };
+    const toggleWord = async () => { await C.setUI({ fpsWord: !word }); C.Sound.ui('ok'); g.fpsTest(2500).catch(() => {}); reopen('word'); };   // se ve el ejemplo «144» con o sin la palabra
     const L = [
       [`Mostrar en los juegos<small>${on ? 'Sí · se enciende solo con cada juego' : 'No'}</small>`, toggle, '', toggle, 'on'],
       [`Tamaño<small>‹ ${Math.round(size * 100)} % ›</small>`, step(1), '', d => step(d)(), 'size'],
+      [`Palabra «FPS»<small>${word ? 'Sí · «144 FPS»' : 'No · solo el número «144»'}</small>`, toggleWord, '', toggleWord, 'word'],
       ['Probar<small>se ve 4 s arriba a la derecha</small>', async () => { await g.fpsTest(4000).catch(() => {}); reopen('test'); }, '', null, 'test']
     ];
     if (st.win32) {
@@ -307,12 +341,12 @@ const Mej = (() => {
   }
 
   return {
-    init(ctx) { C = ctx; applyEmber(); },
-    EMB, PLAYS, DOCK, TAB_LABEL,
+    init(ctx) { C = ctx; applyEmber(); applyCosmos(); },
+    EMB, COS, PLAYS, DOCK, TAB_LABEL,
     fonts: { all: allFonts, name: fontName, apply: applyFont, load: loadUserFonts, hasUser: () => USER.length > 0, can: () => !!gsx(),
       add: async () => { const g = gsx(); if (!g) return []; const ids = await g.fontAdd().catch(() => []); if (ids.length) await loadUserFonts(); return ids; },
       del: async id => { const g = gsx(); if (!g) return false; const ok = await g.fontDel(id).catch(() => false); if (ok) await loadUserFonts(); return ok; } },
-    dock: { apply: dockApply, set: dockSet, kick: dockKick, active: () => dk.act > 0 },
+    dock: { apply: dockApply, set: dockSet, kick: dockKick, active: () => dk.act > 0, hover, reset: hoverReset, leave: hoverLeave },
     ember: { apply: applyEmber },
     tab: { cards, preview, patch, label, restore },
     fpsMenu, screenMenu, buzzMenu

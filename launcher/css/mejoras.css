@@ -5,6 +5,12 @@
 /* body.ff solo existe cuando se ha elegido uno; «La del estilo» no toca nada. Los iconos de teclas de la barra de abajo se quedan con su letra */
 body.ff{font-family:var(--ff)}
 
+/* ───────────── capas: la pastilla «Jugar» nunca por encima de los menús ─────────────
+   La pastilla o el botón de «Intro para jugar» (#cta y #acts con body.pplay) van con position:fixed y z-index:2, pero los menús (#ov), la pantalla «Iniciando…» (#ld)
+   y el navegador (#br) no tenían z-index y se quedaban POR DEBAJO: la pastilla se veía encima del menú Sistema, de «Iniciando…» y de la web.
+   Orden de capas: pastilla 2 < menús, carga, navegador y subconsola 3 < bandeja de abajo 4 < teclado en pantalla 5 < «mover de sitio» 6 < avisos 9 */
+#br,#ov,#ld{z-index:3}
+
 /* ───────────── barras «Nada» ───────────── */
 #hint.hb-none,#top.tb-none{display:none}
 

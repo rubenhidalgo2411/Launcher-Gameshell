@@ -155,7 +155,7 @@ function create(env) {
   const dirs = () => [path.join(app.getPath('userData'), 'bin'), path.join(__dirname, 'bin')];
   const tool = () => findTool(dirs());
   const selfNames = () => [path.basename(process.execPath), 'electron.exe', 'GameShell.exe'];
-  const cfg = { on: false, size: 1 };
+  const cfg = { on: false, size: 1, word: true };   // word: la palabra «FPS» junto al número
   const permFile = () => path.join(app.getPath('userData'), 'fps-permiso.json');
   let permBusy = false;
   // quién soy: el nombre sale del entorno (con acentos bien) y el SID de whoami (solo números y letras, sin problemas de codificación de la consola)
@@ -190,7 +190,7 @@ function create(env) {
     return ov;
   }
   const js = code => { try { if (ov && !ov.isDestroyed() && ovReady) ov.webContents.executeJavaScript(code).catch(() => {}); } catch {} };
-  function paint() { js(`window.__s(${JSON.stringify(+(cfg.size || 1).toFixed(2))},${JSON.stringify(lastTxt)})`); }
+  function paint() { js(`window.__s(${JSON.stringify(+(cfg.size || 1).toFixed(2))},${JSON.stringify(lastTxt)},${cfg.word ? 'true' : 'false'})`); }
   function setText(t) { lastTxt = t; paint(); }
   function show(v) {
     if (v && !(ov && !ov.isDestroyed())) overlay();
@@ -254,9 +254,15 @@ function create(env) {
   const api = {
     // se llama con la ventana del launcher o con los ajustes (ui.json): tamaño y si debe arrancar solo con cada juego
     configure(ui) {
-      cfg.on = !!(ui && ui.fpsOn); cfg.size = ui && typeof ui.fpsSize === 'number' ? ui.fpsSize : 1;
+      const was = cfg.on;
+      cfg.on = !!(ui && ui.fpsOn); cfg.size = ui && typeof ui.fpsSize === 'number' ? ui.fpsSize : 1; cfg.word = !(ui && ui.fpsWord === false);
       if (ov && !ov.isDestroyed()) { ov.setBounds(bounds()); paint(); }
-      if (!cfg.on && proc && !hidden) { /* el contador pedido a mano (Ctrl+Mayús+F) sigue hasta que se cierre el juego */ }
+      // «Mostrar en los juegos» cambia CON UN JUEGO YA ABIERTO (se vuelve al launcher con Alt+Tab y se cambia el ajuste): el efecto es inmediato.
+      // Antes solo se miraba al abrir el juego, así que apagarlo o encenderlo no se notaba hasta cerrar el juego y abrirlo de nuevo.
+      // Solo se actúa cuando el ajuste CAMBIA (cambiar el tamaño no apaga un contador que se encendió a mano con Ctrl+Mayús+F).
+      if (cfg.on === was) return;
+      if (cfg.on) { if (game && !proc) { hidden = false; startMeter(); } }
+      else { hidden = false; stopMeter(); }
     },
     // un juego acaba de arrancar desde GameShell
     gameStarted(g) {

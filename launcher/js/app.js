@@ -21,10 +21,10 @@ const kbd = t => `<kbd>${t}</kbd>`;
 let UI = { theme: 'classic', name: 'GameShell', bg: '', intro: 'ps2-boot', introBg: '', sounds: true, introSnd: true, vol: .6, menuVol: .6,
   menuSnd: 'auto', introSndSrc: 'auto', bar: 'auto', top: 'auto', psWait: true, psReq: false, pswBg: '', alt: null, mode: '', introText: '',
   tile: 1, tabText: 'Juegos', webText: 'Web', webAds: true, webYt: true, webSb: true, webCookies: true, webOsk: true,
-  play: 'auto', font: 'auto', dock: 0, emberY: 0, emberHue: 0, emberSat: 1, fpsOn: false, fpsSize: 1, buzzOn: true, buzzBeep: true,   // «Intro para jugar», tipo de letra, ampliación, altura/color de Brasas, contador de FPS, mandos Buzz (se activan solos / pitido)
+  play: 'auto', font: 'auto', dock: 0, emberY: 0, emberHue: 0, emberSat: 1, cosmosY: 0, fpsOn: false, fpsSize: 1, fpsWord: true, buzzOn: true, buzzBeep: true,   // «Intro para jugar», tipo de letra, ampliación, altura/color de Brasas, contador de FPS, mandos Buzz (se activan solos / pitido)
   hide: { theme: [], bg: [], intro: [], bar: [], top: [], font: [] }, gone: { theme: [], bg: [], intro: [], bar: [], top: [], font: [] } };
 let F = [], FALL = [];                        // F: fondos que salen en los selectores (los de assets/fondos + las fotos importadas, menos los eliminados) · FALL: todos
-let items = [], sel = 0, mode = 'home', menu = null, wv, gameOn = false, pmode = false, theme = '', stopFx = null, cur = '', tray = null, fxbMode = '', fxId = '', curBg = '', tileS = 1;
+let items = [], LIB = [], sel = 0, mode = 'home', menu = null, wv, gameOn = false, pmode = false, theme = '', stopFx = null, cur = '', tray = null, fxbMode = '', fxId = '', curBg = '', tileS = 1;
 const live = () => !gameOn || document.hasFocus(); // con un juego abierto y el launcher sin foco, se ignora el mando y el teclado
 // lo «eliminado» desde el launcher (estilos, fondos e intros): no sale en los selectores, pero no se borra del disco y se puede restaurar
 const hid = (k, id) => ((UI.hide || {})[k] || []).includes(id) || ((UI.gone || {})[k] || []).includes(id);   // gone = eliminado definitivamente
@@ -46,6 +46,12 @@ const geomB = (T, G, M, S, A, top) => (i, s, W, H) => {
   return { cx: left + T / 2, cy: top(H) + T / 2, k: i === s ? S : 1 };
 };
 const A_ = 'actualizado', B_ = 'actualizacion', N_ = 'nuevo';
+// Arco de «Cosmos»: los iconos siguen una circunferencia grande y se giran según su posición (los usan Cosmos y Brasas en acordeón).
+// c() = altura del seleccionado (fracción del alto; sube o baja con «altura de los iconos») · ks / kn = escala del seleccionado / de los demás · t0 = ángulo del primer vecino · dt = ángulo entre los siguientes
+const arcGeom = (c, ks, kn, t0, dt) => (i, s, W, H, u) => {
+  const d = i - s, R = 1500 * u, th = d ? Math.sign(d) * (t0 + (Math.abs(d) - 1) * dt) : 0;
+  return { cx: W / 2 + R * Math.sin(th), cy: H * c() + R * (1 - Math.cos(th)), k: d ? kn : ks, o: d ? Math.max(.28, 1 - Math.abs(d) * .17) : 1, r: th * 57.2958 };
+};
 const THEMES = {
   // ── de «actualizado» ──
   classic: { name: 'Clásico', desc: 'El de siempre', origin: A_, top: 'a-classic', bar: 'a-classic', snd: 'classic', b: 220, fixed: true,
@@ -93,12 +99,12 @@ const THEMES = {
   cyber: { name: 'Cyberpunk · Neo-Tokio', desc: 'Ciudad bajo la lluvia, neón y marcos de mira', origin: N_, top: 'b', bar: 'b', snd: 'cyber', b: 176,
     geom: (i, s, W, H, u) => ({ cx: W / 2 + (i - s) * 236 * u + Math.sign(i - s) * 22 * u, cy: H * .34, k: i === s ? 1.22 : 1, o: i === s ? 1 : .92 }) },
   cosmos: { name: 'Cosmos', desc: 'Nebulosa, estrellas y un planeta; los iconos orbitan en arco', origin: N_, top: 'a-classic', bar: 'a-classic', snd: 'cosmos', b: 168,
-    geom: (i, s, W, H, u) => { // los iconos siguen un arco, girados según su posición
-      const d = i - s, R = 1500 * u, th = d ? Math.sign(d) * (.145 + (Math.abs(d) - 1) * .108) : 0;
-      return { cx: W / 2 + R * Math.sin(th), cy: H * .35 + R * (1 - Math.cos(th)), k: d ? .86 : 1.28, o: d ? Math.max(.28, 1 - Math.abs(d) * .17) : 1, r: th * 57.2958 };
-    } },
+    geom: arcGeom(() => .35 - Mej.COS.y / 100, 1.28, .86, .145, .108) },   // Mej.COS.y = altura elegida (% de la pantalla, + = más arriba, − = más abajo)
   ember: { name: 'Brasas', desc: 'Chispas que suben desde un fuego en la oscuridad', origin: N_, top: 'a-classic', bar: 'a-classic', snd: 'ember', b: 192,
     geom: (i, s, W, H, u) => ({ cx: W / 2 + (i - s) * 250 * u, cy: H * (.38 - Mej.EMB.y / 100), k: i === s ? 1.2 : .92, o: i === s ? 1 : .84 }) },   // Mej.EMB.y = altura elegida (% de la pantalla, + = más arriba)
+  // Brasas con la colocación de Cosmos: mismo fondo, colores y marcos que Brasas, pero los iconos en arco. La altura es la misma de Brasas (Apariencia → Brasas · altura de los iconos)
+  'ember-accordion': { name: 'Brasas en acordeón', desc: 'Brasas con los iconos en arco, como en Cosmos', origin: N_, top: 'a-classic', bar: 'a-classic', snd: 'ember', b: 192, fx: 'ember',
+    geom: arcGeom(() => .38 - Mej.EMB.y / 100, 1.2, .92, .175, .134) },
   sakura: { name: 'Sakura', desc: 'Atardecer con cerezo en flor y pétalos al viento', origin: N_, top: 'a-classic', bar: 'a-classic', snd: 'sakura', b: 196,
     geom: (i, s, W, H, u) => { const d = Math.abs(i - s); return { cx: W / 2 + (i - s) * 252 * u, cy: H * .5 + Math.min(d, 4) * 11 * u, k: i === s ? 1.18 : .94, o: i === s ? 1 : Math.max(.55, .92 - d * .05) }; } }
 };
@@ -141,7 +147,7 @@ const FX = {
 const FX_ID = 'fx:';
 const fxName = id => (FX[id] || {}).name || 'Del estilo';
 // qué fondo animado se ve: el elegido en Fondo («fx:ember») o, si no hay ninguno (''), el del propio estilo. Con una foto de fondo no se ve ninguno (se oculta), pero se deja el del estilo
-const fxIdFor = (bg, th) => { const m = typeof bg === 'string' && bg.startsWith(FX_ID) && FX[bg.slice(FX_ID.length)]; return m ? bg.slice(FX_ID.length) : (th === 'b-classic' ? 'classic' : th); };
+const fxIdFor = (bg, th) => { const m = typeof bg === 'string' && bg.startsWith(FX_ID) && FX[bg.slice(FX_ID.length)]; return m ? bg.slice(FX_ID.length) : (th === 'b-classic' ? 'classic' : ((THEMES[th] || {}).fx || th)); };
 // intros: [nombre, de cuál viene]. photo = la foto elegida en «Foto de la intro»; b-photo = el fondo que tengas puesto
 const INTROS = {
   'ps2-boot': ['PS2 · Arranque', N_],
@@ -178,6 +184,7 @@ const TOPS = {
 BARS.none = { name: 'Nada', desc: 'No se ve ninguna barra de abajo', origin: '', html: () => '' };
 TOPS.none = { name: 'Nada', desc: 'No se ve ninguna barra de arriba (el teclado y el mando siguen igual)', origin: '' };
 const T = () => THEMES[theme] || THEMES.classic;
+const curItem = () => (mode === 'sub' && Sub.cur()) || items[sel];
 const barId = v => (v && v !== 'auto' && BARS[v]) ? v : T().bar;
 const topId = v => (v && v !== 'auto' && TOPS[v]) ? v : T().top;
 const drawBar = v => { const id = barId(v), h = $('#hint'); h.className = 'hb-' + id; h.innerHTML = BARS[id].html(); };
@@ -285,33 +292,60 @@ function dom(src) {
   });
 }
 
-const tileInner = it => it.t === 'web' ? GLOBE : it.t === 'add' ? PLUS : it.icon ? `<img src="${it.icon}"${it.cover ? ' class="cv"' : ''}>` : '';
+// iconos de las subconsolas: carpeta, y carpeta con «+» para crear una nueva
+const FOLDER_PATH = 'M3 7.5a2 2 0 0 1 2-2h4.2l2 2.3H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z';
+const FOLDER = `<svg viewBox="0 0 24 24"><path d="${FOLDER_PATH}"/></svg>`;
+const FOLDER_PLUS = `<svg viewBox="0 0 24 24"><path d="${FOLDER_PATH}"/><path d="M12 10.5v5M9.5 13h5"/></svg>`;
+const glyphOf = it => it.t === 'web' ? GLOBE : it.t === 'add' ? PLUS : it.t === 'sub' ? FOLDER : it.t === 'newsub' ? FOLDER_PLUS : '';
+const FOLDER_K = '#5b6cf0';                      // color de una subconsola que no tiene logo propio
+const LAB = { game: 'Jugar', web: 'Abrir', sub: 'Abrir', add: 'Añadir', newsub: 'Crear' };   // lo que dice «Jugar» / la pastilla según lo que haya seleccionado
+// una subconsola sin logo propio enseña, en su icono, los de hasta 4 de sus juegos (o una carpeta si está vacía)
+const tileInner = it => it.t === 'web' ? GLOBE : it.t === 'add' ? PLUS : it.t === 'newsub' ? FOLDER_PLUS
+  : it.t === 'sub' ? (it.icon ? `<img src="${it.icon}" class="cv">` : it.mos && it.mos.length ? `<div class="mos m${it.mos.length}">${it.mos.map(s => `<img src="${s}">`).join('')}</div>` : FOLDER)
+  : it.icon ? `<img src="${it.icon}"${it.cover ? ' class="cv"' : ''}>` : '';
 async function refresh() {
   let g;
   try { g = await api.games(); } catch { setTimeout(refresh, 2000); if (items.length) return; g = []; } // si falla, se mantiene lo que había y se reintenta
   const keep = items[sel] && items[sel].id;
   g = g.filter(x => pmode || !x.hidden);          // las ocultas existen (y pueden arrancar solas) pero no salen
-  const cs = await Promise.all(g.map(x => dom(x.icon)));
+  const cs = await Promise.all(g.map(x => x.folder && !x.icon ? FOLDER_K : dom(x.icon)));
+  // LIB = todo lo de games.json: juegos (t:'game') y subconsolas (t:'sub'). Un juego con «parent» está dentro de esa subconsola y no sale en la fila del inicio
+  LIB = g.map((x, i) => x.folder ? { ...x, t: 'sub', k: cs[i] } : { ...x, t: 'game', k: cs[i],
+    sub: x.auto ? 'Intro para abrir. Se abre solo al iniciar el launcher' : 'Intro para jugar',
+    sub2: x.auto ? 'Se abre solo al iniciar el launcher' : '' });
+  for (const f of LIB.filter(x => x.t === 'sub')) {   // lo que cuenta cada subconsola: cuántos juegos lleva y cuáles salen en su icono
+    const ks = LIB.filter(x => x.parent === f.id), w = ks.length === 1 ? '1 juego' : ks.length + ' juegos';
+    f.n = ks.length; f.mos = ks.map(x => x.icon).filter(Boolean).slice(0, 4);
+    f.sub = ks.length ? 'Intro para abrir · ' + w : 'Intro para abrir · está vacía'; f.sub2 = ks.length ? w : 'Vacía';
+  }
   items = [
     { t: 'web', name: 'Navegador', sub: 'Internet', sub2: 'Internet', k: '#2563eb' },
-    ...g.map((x, i) => ({ ...x, t: 'game', k: cs[i],
-      sub: x.auto ? 'Intro para abrir. Se abre solo al iniciar el launcher' : 'Intro para jugar',
-      sub2: x.auto ? 'Se abre solo al iniciar el launcher' : '' })),
-    { t: 'add', name: 'Añadir juego', sub: 'Elige un programa o script de tu PC', sub2: 'Elige un programa o script de tu PC', k: '#475569' }
+    ...LIB.filter(x => !x.parent),
+    { t: 'add', name: 'Añadir juego', sub: 'Elige un programa o script de tu PC', sub2: 'Elige un programa o script de tu PC', k: '#475569' },
+    { t: 'newsub', name: 'Crear subconsola', sub: 'Agrupa tus juegos en una carpeta', sub2: 'Agrupa tus juegos en una carpeta', k: '#4f6bed' }
   ];
   if (keep) { const j = items.findIndex(x => x.id === keep); if (j >= 0) sel = j; }
   sel = Math.max(0, Math.min(sel, items.length - 1));
   // <u class="ba|bh"> son las etiquetas «Arranca solo» / «Oculta» de los estilos de «actualizacion» (los demás las dibujan con ::before/::after)
-  $('#row').innerHTML = items.map((it, i) =>
-    `<div class="t${it.cover ? ' cv' : ''}" style="--k:${it.k}" data-i="${i}" data-n="${esc(it.name)}"${it.auto ? ' data-a' : ''}${it.hidden ? ' data-h' : ''}>${tileInner(it)}<u class="ba">Arranca solo</u><u class="bh">Oculta</u></div>`).join('');
+  const row = $('#row');
+  row.innerHTML = items.map((it, i) =>
+    `<div class="t${it.cover ? ' cv' : ''}${it.t === 'sub' ? ' fd' : ''}" style="--k:${it.k}" data-i="${i}" data-n="${esc(it.name)}"${it.auto ? ' data-a' : ''}${it.hidden ? ' data-h' : ''}>${tileInner(it)}<u class="ba">Arranca solo</u><u class="bh">Oculta</u></div>`).join('');
+  [...row.children].forEach((e, i) => { items[i].el = e; });   // cada icono sabe cuál es su elemento: así, al reordenarlos, se deslizan en vez de reaparecer
+  Mej.dock.reset();                                            // el foco del ratón se calculó con la lista anterior
   show();
+  Sub.sync();                                                  // si hay una subconsola abierta, se vuelve a pintar con lo nuevo
 }
 
 // Tamaño de los iconos (Apariencia → Tamaño de iconos): toda la fila se agranda o se encoge igual (tamaño, huecos y posiciones) tomando como punto fijo un borde del icono
 // seleccionado, el que toca al título (t.anc: 1.ª letra c|l = centro|izquierda, 2.ª b|t|c = abajo|arriba|centro). Así el título y el subtítulo nunca se pegan ni se separan.
 const TILE_MIN = .5, TILE_MAX = 1.6;
+// Foco del ratón: con el puntero sobre la fila, el aro de foco (y el nombre) se van con el icono que tiene debajo y el seleccionado con el teclado lo pierde mientras tanto.
+// La fila NO se mueve por pasar el ratón (si la selección cambiara al pasar por encima, la fila se desplazaría bajo el puntero y la lista saldría corriendo): al hacer clic sí se selecciona.
+const focusIdx = () => { const h = Mej.dock.hover(); return h >= 0 && h < items.length ? h : sel; };
+function setTitles(f) { $('#title').textContent = $('#tname').textContent = f.name; $('#sub').textContent = playNow() === 'text' ? f.sub : f.sub2; }
+function refocus() { layout(); const f = items[focusIdx()]; if (f) { setTitles(f); placePlay(); } }   // el foco del ratón cambió
 function layout() {
-  const t = T(), u = t.fixed ? 1 : innerHeight / 1080, b = t.b * u, els = $('#row').children, S = Math.max(TILE_MIN, Math.min(TILE_MAX, tileS || 1)), G = [];
+  const t = T(), u = t.fixed ? 1 : innerHeight / 1080, b = t.b * u, els = items.map((it, i) => it.el || $('#row').children[i]), S = Math.max(TILE_MIN, Math.min(TILE_MAX, tileS || 1)), G = [];
   for (let i = 0; i < els.length; i++) {
     const g = t.geom(i, sel, innerWidth, innerHeight, u), k = g.k || 1;
     G.push({ g, k, cx: g.x !== undefined ? g.x + b * k / 2 : g.cx, cy: g.y !== undefined ? g.y + b * k / 2 : g.cy });
@@ -323,12 +357,14 @@ function layout() {
     for (const c of G) { c.cx = ax + (c.cx - ax) * S; c.cy = ay + (c.cy - ay) * S; c.k *= S; }
   }
   Mej.dock.apply(G, b);                         // ampliación al pasar el ratón (Apariencia → Ampliación)
+  const fi = focusIdx();
   for (let i = 0; i < els.length; i++) {
     const { g, k, cx, cy } = G[i], e = els[i];
     e.style.transform = g.r !== undefined ? `translate(${cx}px,${cy}px) rotate(${g.r}deg) scale(${k}) translate(${-b / 2}px,${-b / 2}px)` : `translate(${cx - b * k / 2}px,${cy - b * k / 2}px) scale(${k})`;
     e.style.opacity = g.o === undefined ? 1 : g.o;
-    e.style.zIndex = i === sel ? 3 : 1;
-    e.classList.toggle('s', i === sel);
+    if (e.dataset.i !== String(i)) e.dataset.i = i;            // por si se han reordenado
+    e.style.zIndex = i === fi ? 4 : i === sel ? 3 : 1;
+    e.classList.toggle('s', i === fi);                           // el aro de foco: en el icono seleccionado o, con el ratón encima de la fila, en el que tiene debajo
   }
   const tn = t.tn ? t.tn(S, u) : [0, 0];   // el nombre que PS5 pone junto al icono grande se mueve con él
   document.documentElement.style.setProperty('--tnx', tn[0] + 'px'); document.documentElement.style.setProperty('--tny', tn[1] + 'px');
@@ -350,7 +386,7 @@ function heroSwap(it) {
   h.className = 'h' + (cv ? ' cv' : '') + (pic ? '' : ' ni'); h.dataset.sig = sig; h.dataset.t = String(heroAt = performance.now());
   h.style.setProperty('--hc', it.k);
   img.alt = ''; if (pic) img.src = pic;
-  g.className = 'g'; g.innerHTML = it.t === 'web' ? GLOBE : it.t === 'add' ? PLUS : '';
+  g.className = 'g'; g.innerHTML = pic ? '' : glyphOf(it);       // con logo propio (una subconsola con portada) no se dibuja la carpeta encima
   h.append(img, g);
   if (!last) h.classList.add('on');                              // la primera capa sale ya puesta
   host.append(h);
@@ -361,7 +397,7 @@ function heroSwap(it) {
   while (host.children.length > 6) host.firstElementChild.remove();
   clearTimeout(heroC); heroC = setTimeout(() => { const l = host.lastElementChild; while (host.firstElementChild !== l) host.firstElementChild.remove(); }, 800);
 }
-const bhContent = it => { const pic = it.hero || it.icon; return it.t === 'game' ? (pic ? `<img src="${esc(pic)}">` : '') : it.t === 'web' ? GLOBE : PLUS; };
+const bhContent = it => { const pic = it.hero || it.icon; return it.t === 'game' || (it.t === 'sub' && pic) ? (pic ? `<img src="${esc(pic)}">` : '') : glyphOf(it) || PLUS; };
 function setBHero(it) {
   clearTimeout(bhT);
   const h = $('#bhero'), key = it.id || it.t, last = h.lastElementChild;
@@ -388,8 +424,8 @@ function bhSwap(it) {
 function show() {
   layout();
   const it = items[sel]; if (!it) return;
-  const t = T(), lab = it.t === 'game' ? 'Jugar' : it.t === 'web' ? 'Abrir' : 'Añadir';
-  $('#title').textContent = $('#tname').textContent = it.name; $('#sub').textContent = playNow() === 'text' ? it.sub : it.sub2;
+  const t = T(), lab = LAB[it.t] || 'Añadir';
+  setTitles(items[focusIdx()] || it);
   $('#play').textContent = lab; $('#cta').innerHTML = PLAY + lab;
   document.body.style.setProperty('--c', it.k);
   if (t.hero) setHero(it);
@@ -404,7 +440,7 @@ function openMenu(title, list, i0 = 0, o = {}) {
   if (typeof i0 === 'string') i0 = Math.max(0, list.findIndex(l => l[4] === i0));
   menu = { list, i: Math.max(0, Math.min(i0, list.length - 1)), o };
   $('#mn').innerHTML = `<h2>${esc(title)}</h2>` + list.map((l, i) => `<p class="${l[2] || ''}" data-i="${i}">${l[0]}</p>`).join('') + (o.help ? `<div class="mh">${o.help}</div>` : '');
-  $('#ov').classList.add('on'); fitMenu(); mark(); Mej.dock.kick();
+  $('#ov').classList.add('on'); fitMenu(); mark(); Mej.dock.reset(); Mej.dock.kick();
 }
 // las listas largas se compactan solas para que quepan en pantalla (dn → dn2); si aun así no caben, el título avisa de que hay filas ocultas
 function fitMenu() {
@@ -419,23 +455,69 @@ const toast = t => { const e = $('#toast'); e.textContent = t; e.classList.add('
 
 async function openItem(it) {
   if (it.t === 'web') return setMode('web');
-  if (it.t === 'add') { await guarded('Contraseña para añadir juegos', p => api.add(p))(); return refresh(); }
-  $('#ld b').textContent = it.name; $('#ld').classList.add('on');
+  if (it.t === 'add') { await guarded('Contraseña para añadir juegos', p => api.add(p, it.parent))(); return refresh(); }   // it.parent: la subconsola abierta (si no, al inicio)
+  if (it.t === 'sub') return Sub.open(it.id);
+  if (it.t === 'newsub') return newSub(true);
+  $('#ld b').textContent = it.name || it.orig || ''; $('#ld').classList.add('on');
   setTimeout(() => $('#ld').classList.remove('on'), 9000);
   gameOn = true; api.launch(it.id);
+}
+
+// «Crear subconsola»: una carpeta donde agrupar juegos. go = abrirla al crearla (para empezar a meter juegos); devuelve su id (o null si se cancela)
+async function newSub(go) {
+  const v = await ask('Nombre de la subconsola', { max: 40, ok: 'Crear' });
+  if (v === null) return null;
+  let id = null; try { id = await api.folderNew(v.trim() || 'Subconsola'); } catch {}
+  if (!id) { toast('No se pudo crear la subconsola'); Sound.ui('err'); return null; }
+  await refresh();
+  if (go) { const j = items.findIndex(x => x.id === id); if (j >= 0) { sel = j; show(); } toast('Subconsola creada · mete juegos con «Añadir juego»'); Sub.open(id); }
+  return id;
+}
+// «Mover a una subconsola…» (desde las opciones de un juego): elige a cuál, o crea una nueva en el momento
+function moveToMenu(it) {
+  const subs = LIB.filter(x => x.t === 'sub' && x.id !== it.parent), back = () => opts(it);
+  const done = async (id, msg) => { await api.moveTo(it.id, id); toast(msg); await refresh(); };
+  const L = subs.map(f => [`${esc(f.name)}<small>${esc(f.n === 1 ? '1 juego' : f.n + ' juegos')}</small>`, () => done(f.id, `Ahora está en «${f.name}»`)]);
+  L.push(['Nueva subconsola…', async () => { const id = await newSub(false); if (id) { await api.moveTo(it.id, id); const f = LIB.find(x => x.id === id); toast(`Ahora está en «${f ? f.name : 'la subconsola'}»`); await refresh(); } else back(); }]);
+  if (it.parent) L.push(['Fuera de las subconsolas<small>vuelve al inicio</small>', () => done(null, 'Vuelve a la fila del inicio')]);
+  L.push(['Cancelar', back]);
+  openMenu(`Mover «${it.name || it.orig || 'programa'}» a…`, L, 0, { back, help: 'Dentro de una subconsola los juegos se ven como portadas en cuadrícula' });
+}
+function askRemoveSub(it) {
+  const back = () => opts(it);
+  openMenu(`¿Quitar la subconsola «${it.name}»?`, [
+    ['Quitar la subconsola', async () => { await api.remove(it.id); toast('Subconsola quitada · sus juegos vuelven al inicio'); sel = Math.max(0, sel - 1); await refresh(); }],
+    ['Cancelar', back]
+  ], 1, { back, help: 'No se borra ningún juego: salen otra vez en la fila del inicio' });
 }
 
 // Opciones (Supr / START): lo del programa seleccionado + apariencia, tecla Windows y modo juego
 function opts(it, i0 = 0) {
   const L = [];
+  if (it.t === 'sub') { // una subconsola: abrirla, nombre, logo, sitio y quitarla
+    L.push(['Abrir', () => Sub.open(it.id)]);
+    L.push([`Cambiar nombre…<small>${esc(it.name)}</small>`, async () => {
+      const v = await ask('Nombre de la subconsola', { value: it.name, max: 40, ok: 'Guardar' });
+      if (v === null) return;
+      if (!v.trim()) { toast('La subconsola necesita un nombre'); Sound.ui('err'); return; }
+      await api.rename(it.id, v); toast('Nombre cambiado'); await refresh(); }]);
+    L.push(['Cambiar logo…', async () => {
+      const r = await api.icon(it.id);
+      if (r === true) { toast('Logo cambiado'); await refresh(); } else if (r) toast(r === 'grande' ? 'Esa imagen pesa demasiado' : 'No se pudo cambiar el logo'); }]);
+    if (it.cover) L.push(['Quitar logo personalizado', async () => { await api.iconOff(it.id); toast('Vuelve a salir con los iconos de sus juegos'); await refresh(); }]);
+    L.push(['Mover de sitio<small>←/→ para colocarla</small>', () => Sub.grab(it)]);
+    L.push(['Quitar subconsola<small>los juegos vuelven al inicio</small>', () => askRemoveSub(it)]);
+  }
   if (it.t === 'game') {
     L.push([it.auto ? 'Dejar de abrirlo al iniciar' : 'Abrirlo solo al iniciar el launcher', async () => {
       await api.auto(it.id, !it.auto); toast(it.auto ? 'Ya no se abrirá solo' : 'Se abrirá solo al iniciar el launcher'); await refresh(); }]);
-    L.push([`Cambiar nombre…<small>${esc(it.name)}</small>`, async () => { // el nombre que sale en el launcher (el archivo .exe no se toca)
-      const v = await ask('Nombre del programa', { value: it.name, max: 60, ok: 'Guardar' });
+    L.push(['Mover de sitio<small>←/→ para colocarlo</small>', () => Sub.grab(it)]);   // reordenar los programas (también con T / □)
+    L.push([`Mover a una subconsola…<small>${it.parent ? 'ahora en «' + esc((LIB.find(x => x.id === it.parent) || {}).name || '') + '»' : 'carpetas de juegos'}</small>`, () => moveToMenu(it)]);
+    L.push([`Cambiar nombre…<small>${it.name ? esc(it.name) : 'sin nombre'}</small>`, async () => { // el nombre que sale en el launcher (el archivo .exe no se toca). Vacío = sin nombre
+      const v = await ask('Nombre del programa (vacío = sin nombre)', { value: it.name, max: 60, ok: 'Guardar' });
       if (v === null) return;
-      await api.rename(it.id, v); toast(v.trim() ? 'Nombre cambiado' : 'Nombre original restaurado'); await refresh(); }]);
-    if (it.orig && it.name !== it.orig) L.push([`Volver al nombre original<small>${esc(it.orig)}</small>`, async () => { await api.rename(it.id, ''); toast('Nombre original restaurado'); await refresh(); }]);
+      await api.rename(it.id, v); toast(v.trim() ? 'Nombre cambiado' : 'Sin nombre: el icono sale sin texto'); await refresh(); }]);
+    if (it.orig && it.name !== it.orig) L.push([`Volver al nombre original<small>${esc(it.orig)}</small>`, async () => { await api.rename(it.id, null); toast('Nombre original restaurado'); await refresh(); }]);
     L.push(['Cambiar logo…', async () => {
       const r = await api.icon(it.id);
       if (r === true) { toast('Logo cambiado'); await refresh(); } else if (r) toast(r === 'grande' ? 'Esa imagen pesa demasiado' : 'No se pudo cambiar el logo'); }]);
@@ -447,7 +529,7 @@ function opts(it, i0 = 0) {
     if (it.hero) L.push(['Quitar la foto de la derecha', async () => { await api.heroOff(it.id); toast('Vuelve a salir la del programa'); await refresh(); }]);
     if (pmode) L.push([it.hidden ? 'Mostrar en el launcher' : 'Ocultar del launcher', async () => {
       await api.hide(it.id, !it.hidden); toast(it.hidden ? 'Ahora se muestra en el launcher' : 'Oculta del launcher'); await refresh(); }]);
-    L.push(['Quitar de la lista', async () => { await api.remove(it.id); sel = Math.max(0, sel - 1); await refresh(); }]);
+    L.push(['Quitar de la lista', async () => { await api.remove(it.id); if (mode !== 'sub') sel = Math.max(0, sel - 1); await refresh(); }]);
   }
   L.push(['Apariencia', () => appearance(0, 'apr'), 'sub', null, 'apr'], ['Navegador<small>anuncios · SponsorBlock · teclado</small>', () => webMenu(0, 'opts'), 'sub', null, 'web'],
     ['Resolución de pantalla<small>sin salir a Windows</small>', () => Mej.screenMenu(), 'sub', null, 'res'],
@@ -455,7 +537,7 @@ function opts(it, i0 = 0) {
     [`Mandos Buzz<small>${UI.buzzOn === false ? 'apagados' : 'se activan solos'}</small>`, () => Mej.buzzMenu(), 'sub', null, 'buzz'],
     ['Buscar actualizaciones<small>desde GitHub</small>', () => GSUpd.menu(), 'sub', null, 'upd'],
     ['Modo Juego', gameMode], ['Cancelar']);
-  openMenu(it.t === 'game' ? it.name : 'Opciones', L, i0);
+  openMenu(it.t === 'game' || it.t === 'sub' ? (it.name || it.orig || 'Programa') : 'Opciones', L, i0);
 }
 // Modo Juego = el launcher como arranca al encender: corta los dos modos secretos (R×8: sin contraseña, P×8: apps ocultas) si estaban puestos,
 // hasta que se vuelvan a poner. Por fuera solo parece un ajuste más: el aviso es el mismo se hubiera cortado algo o no.
@@ -551,7 +633,7 @@ function restoreMenu(pj, at = 0) {
 }
 
 function appearance(at = 'theme', pj = 0) {
-  const back = () => opts(items[sel], pj), nh = hiddenCount();
+  const back = () => opts(curItem(), pj), nh = hiddenCount();
   const L = [
     [`Estilo<small>${esc(themeName(UI.theme))}</small>`, () => openTray('theme', pj), 'sub', null, 'theme'],
     [`Fondo<small>${esc(bgName(UI.bg))}</small>`, () => openTray('bg', pj), 'sub', null, 'bg'],
@@ -564,6 +646,7 @@ function appearance(at = 'theme', pj = 0) {
     [`Ampliación al pasar el ratón<small>${esc(Mej.tab.label.dock())}</small>`, () => openTray('dock', pj), 'sub', null, 'dock'],
     ...(emberOn() ? [[`Brasas · color<small>${esc(Mej.tab.label.emberc())}</small>`, () => openTray('emberc', pj), 'sub', null, 'emberc']] : []),
     ...(emberTh() ? [[`Brasas · altura de los iconos<small>${esc(Mej.tab.label.embery())}</small>`, () => openTray('embery', pj), 'sub', null, 'embery']] : []),
+    ...(cosmosTh() ? [[`Cosmos · altura de los iconos<small>${esc(Mej.tab.label.cosmosy())}</small>`, () => openTray('cosmosy', pj), 'sub', null, 'cosmosy']] : []),
     [`Texto de arriba a la izquierda<small>${esc(UI.tabText ? '«' + UI.tabText + '»' : 'Sin texto')}</small>`, () => tabsMenu(pj), 'sub', null, 'tabs'],
     [`Intro<small>${esc(introLabel())}</small>`, () => pickIntro(UI.intro, pj), 'sub', null, 'intro'],
     [`Precarga Post Intro<small>${esc(UI.psWait ? 'Sí · ' + pswName() : 'No')}</small>`, () => precarga('on', pj), 'sub', null, 'ps'],
@@ -578,7 +661,7 @@ function appearance(at = 'theme', pj = 0) {
 const ago = t => { const m = Math.max(1, Math.round((Date.now() - t) / 60000)); return m < 60 ? m + ' min' : m < 2880 ? Math.round(m / 60) + ' h' : Math.round(m / 1440) + ' días'; };
 async function webMenu(at = 0, from = 'opts') { // from: 'opts' (vuelve a Opciones) | 'web' (vuelve al navegador)
   let st = {}; try { st = await api.webStats(); } catch {}
-  const back = () => from === 'web' ? (wv && wv.focus()) : opts(items[sel], 'web'), on = v => v ? 'Sí' : 'No';
+  const back = () => from === 'web' ? (wv && wv.focus()) : opts(curItem(), 'web'), on = v => v ? 'Sí' : 'No';
   const tog = (key, i, msg) => async () => { await setUI({ [key]: !UI[key] }); setShield(); Sound.ui('ok'); toast(msg(UI[key])); webMenu(i, from); };
   const L = [
     [`Bloquear anuncios y rastreadores<small>${on(UI.webAds)}</small>`, tog('webAds', 0, v => v ? 'Bloqueador encendido · vale para las páginas que abras ahora' : 'Bloqueador apagado'), '', null, 'ads'],
@@ -654,10 +737,11 @@ function tabsMenu(pj, at = 0) {
 // Intro elige, Esc cancela (vuelve a lo que había), ↑/↓ cambia de apartado sin salir y Supr/△ elimina la tarjeta (estilos y fondos).
 // [clave, nombre del apartado, fila de Apariencia a la que se vuelve]. «Brasas · color» sale con el estilo o el fondo Brasas; «Brasas · altura» solo con el estilo (es el que coloca los iconos).
 const TABS = [['theme', 'Estilo', 'theme'], ['bg', 'Fondo', 'bg'], ['bar', 'Barra inferior', 'bar'], ['top', 'Barra superior', 'top'], ['font', 'Tipo de letra', 'font'], ['play', 'Intro para jugar', 'play'],
-  ['tile', 'Tamaño de iconos', 'tile'], ['dock', 'Ampliación', 'dock'], ['emberc', 'Brasas · color', 'emberc'], ['embery', 'Brasas · altura', 'embery']];
+  ['tile', 'Tamaño de iconos', 'tile'], ['dock', 'Ampliación', 'dock'], ['emberc', 'Brasas · color', 'emberc'], ['embery', 'Brasas · altura', 'embery'], ['cosmosy', 'Cosmos · altura', 'cosmosy']];
 const emberOn = () => UI.theme === 'ember' || fxIdFor(UI.bg, UI.theme) === 'ember';
-const emberTh = () => UI.theme === 'ember';
-const tabsNow = () => TABS.filter(([k]) => k === 'emberc' ? emberOn() || (tray && tray.tab === k) : k === 'embery' ? emberTh() || (tray && tray.tab === k) : true);
+const emberTh = () => UI.theme === 'ember' || UI.theme === 'ember-accordion';   // los estilos que colocan los iconos a la altura de Brasas
+const cosmosTh = () => UI.theme === 'cosmos';
+const tabsNow = () => TABS.filter(([k]) => k === 'emberc' ? emberOn() || (tray && tray.tab === k) : k === 'embery' ? emberTh() || (tray && tray.tab === k) : k === 'cosmosy' ? cosmosTh() || (tray && tray.tab === k) : true);
 const DELETABLE = ['theme', 'bg', 'bar', 'top', 'font'];   // apartados con tarjetas que se pueden eliminar
 const TILES = [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160];
 const shownFx = () => Object.keys(FX).filter(id => id !== 'b-classic' && (!hid('bg', FX_ID + id) || FX_ID + id === UI.bg));
@@ -738,7 +822,7 @@ async function trayPick() {
     return openTray('font', r.pj);
   }
   playPrev = null;
-  await setUI(['font', 'play', 'dock', 'emberc', 'embery'].includes(t.tab) ? Mej.tab.patch(t.tab, c) : { [t.tab]: t.tab === 'tile' ? +c.id / 100 : c.id });
+  await setUI(['font', 'play', 'dock', 'emberc', 'embery', 'cosmosy'].includes(t.tab) ? Mej.tab.patch(t.tab, c) : { [t.tab]: t.tab === 'tile' ? +c.id / 100 : c.id });
   const r = trayClose(false);
   toast(TABS.find(x => x[0] === r.tab)[1] + ': ' + c.name);
   appearance(r.line, r.pj);
@@ -1064,13 +1148,14 @@ $('#sh').onclick = () => webMenu(0, 'web');
 // ───────────────────────── entrada: teclado, ratón y mando ─────────────────────────
 // botón Share (Create en el DualSense) del mando: abre Apariencia directamente, desde cualquier sitio
 function openAppearance() {
-  if (tray || !items[sel]) return;      // en la bandeja ya se está dentro de Apariencia
+  if (tray || !curItem()) return;      // en la bandeja ya se está dentro de Apariencia
   if (mode === 'web') setMode('home');
   closeMenu(); Sound.ui('open');
   appearance('theme', 'apr');           // «Volver» lleva a Opciones, sobre la fila de Apariencia
 }
 function act(a) {
   if (GSUpd.open) return GSUpd.act(a);   // pantalla «Confirmar que deseo esta actualización» (js/actualizar.js): va por encima de la intro y de todo
+  if (Mej.dock.leave()) refocus();                      // teclado o mando: el foco deja de ser el del ratón y vuelve al icono seleccionado
   if (Intro.active) return Intro.skip();
   if (PSW.active) return PSW.pad();
   if (!live()) return;
@@ -1091,13 +1176,16 @@ function act(a) {
     else if (a === 'back') { Sound.ui('back'); closeMenu(); return m.o.back && m.o.back(); }
     return;
   }
+  if (mode === 'sub') return Sub.act(a);               // la cuadrícula de una subconsola tiene su propia navegación
   if (mode === 'web') return a === 'back' ? setMode('home') : a === 'opt' ? typeUrl() : a === 'sq' ? webMenu(0, 'web') : undefined; // en el navegador: ○ vuelve · START busca · □ ajustes del navegador
+  if (Sub.moving()) return Sub.moveAct(a);              // «mover de sitio»: ←/→ colocan el icono, Intro lo suelta
   const was = sel;
   if (a === 'l') sel = Math.max(0, sel - 1);
   else if (a === 'r') sel = Math.min(items.length - 1, sel + 1);
   else if (a === 'ok') { Sound.ui('ok'); return openItem(items[sel]); }
   else if (a === 'opt') { Sound.ui('open'); return opts(items[sel]); }
   else if (a === 'back') { Sound.ui('open'); return power(); }
+  else if (a === 'sq') return Sub.grab(items[sel]);     // T / □ sobre un programa o una subconsola: cogerlo para moverlo
   else return;
   if (sel !== was) Sound.ui('move');
   show();
@@ -1157,11 +1245,11 @@ addEventListener('keydown', e => {
   secret(e);
   const a = K[e.key]; if (a) { e.preventDefault(); if (a === 'sq' && e.repeat) return; act(a); }
 });
-$('#row').onclick = e => { if (tray) return; const t = e.target.closest('.t'); if (!t) return; const i = +t.dataset.i; if (i === sel) act('ok'); else { sel = i; Sound.ui('move'); show(); } };
+$('#row').onclick = e => { if (tray || Sub.moving()) return; const t = e.target.closest('.t'); if (!t) return; const i = +t.dataset.i; if (i === sel) act('ok'); else { sel = i; Sound.ui('move'); show(); } };
 $('#row').oncontextmenu = e => { // clic derecho con el ratón sobre un icono: lo mismo que Supr / START (sus opciones)
   e.preventDefault();
   const t = e.target.closest('.t');
-  if (!t || tray || menu || OSK.isOpen || mode !== 'home' || Intro.active || PSW.active || !live()) return;
+  if (!t || tray || menu || OSK.isOpen || mode !== 'home' || Intro.active || PSW.active || !live() || Sub.moving()) return;
   const i = +t.dataset.i; if (i !== sel) { sel = i; Sound.ui('move'); show(); }
   act('opt');
 };
@@ -1204,7 +1292,7 @@ const held = {}, REP = new Set(['l', 'r', 'u', 'd', 'sq', 'l1', 'r1']);
   requestAnimationFrame(poll);
 })();
 
-api.onHome(() => { gameOn = false; OSK.cancel(); closeMenu(); if (tray) trayClose(true); $('#ld').classList.remove('on'); setMode('home'); refresh(); });
+api.onHome(() => { gameOn = false; OSK.cancel(); closeMenu(); if (tray) trayClose(true); $('#ld').classList.remove('on'); if (mode !== 'sub') setMode('home'); refresh(); });
 addEventListener('focus', () => { gameOn = false; });
 const tick = () => {
   const d = new Date();
@@ -1217,12 +1305,19 @@ addEventListener('resize', () => { scale(); items.length && show(); tray && tray
 // mejoras.js (tipos de letra, ampliación tipo Dock, Brasas, FPS y resolución) recibe aquí lo que necesita de este archivo
 Mej.init({
   ui: () => UI, hid, theme: () => theme, Sound, setUI: p => setUI(p), toast: t => toast(t), openMenu: (...a) => openMenu(...a), closeMenu: () => closeMenu(), rowHtml: (i, h) => rowHtml(i, h),
-  opts: (...a) => opts(...a), items: () => items, sel: () => sel, layout: () => layout(), playId: v => playId(v),
+  opts: (...a) => opts(...a), items: () => [curItem()], sel: () => 0, layout: () => layout(), refocus: () => refocus(), playId: v => playId(v),   // items/sel: el elemento con el foco (para volver a sus opciones)
   previewPlay: id => { playPrev = id === 'auto' ? null : id; applyPlay(); show(); },        // «Intro para jugar» en directo mientras se desliza el selector
   afterFont: () => { placePlay(); if (items.length) layout(); },                              // otro tipo de letra: lo colocado midiendo el texto se recoloca
-  canDock: () => mode === 'home' && !menu && !OSK.isOpen && (!tray || tray.tab === 'dock') && !Intro.active && !PSW.active && live() && items.length > 0
+  canDock: () => mode === 'home' && !menu && !OSK.isOpen && (!tray || tray.tab === 'dock') && !Intro.active && !PSW.active && live() && items.length > 0,
+  canHover: () => mode === 'home' && !menu && !tray && !OSK.isOpen && !Intro.active && !PSW.active && live() && items.length > 0 && !Sub.moving()   // el foco del ratón solo con la fila a la vista y sin nada delante
 });
-GSUpd.init({ toast: t => toast(t), openMenu: (...a) => openMenu(...a), closeMenu: () => closeMenu(), opts: (...a) => opts(...a), items: () => items, sel: () => sel, Sound });   // «Buscar actualizaciones» y «Confirmar que deseo esta actualización»
+Sub.init({
+  items: () => items, sel: () => sel, setSel: i => { sel = i; }, show: () => show(), layout: () => layout(), refresh: () => refresh(),
+  kids: id => LIB.filter(x => x.parent === id), byId: id => LIB.find(x => x.id === id), mode: () => mode, setMode: m => setMode(m),
+  openItem: it => openItem(it), opts: it => opts(it), toast: t => toast(t), Sound, menuOpen: () => !!menu,
+  order: ids => api.order(ids)
+});
+GSUpd.init({ toast: t => toast(t), openMenu: (...a) => openMenu(...a), closeMenu: () => closeMenu(), opts: (...a) => opts(...a), items: () => [curItem()], sel: () => 0, Sound });   // items/sel: el elemento con el foco (para volver a sus Opciones). «Buscar actualizaciones» y «Confirmar que deseo esta actualización»
 Mej.fonts.load().then(() => Mej.fonts.apply(UI.font)).catch(() => {});                      // los tipos de letra que importaste
 
 // ───────────────────────── arranque ─────────────────────────

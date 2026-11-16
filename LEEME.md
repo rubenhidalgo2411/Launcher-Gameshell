@@ -7,6 +7,15 @@ Ya no hay dos launchers que cambiar con W×4: todo se elige en **Opciones → Ap
 
 | Qué | Dónde / cómo |
 |---|---|
+| **Subconsolas** (carpetas de juegos) | En la fila del inicio, la ficha **Crear subconsola** (detrás de *Añadir juego*) crea una carpeta donde agrupar juegos. Al abrirla se ven los juegos como **portadas en cuadrícula, con el nombre debajo**. Se llena con **Opciones de un juego → Mover a una subconsola…** o con **Añadir juego** estando dentro. Ver *Subconsolas*. |
+| **Reordenar los programas** | **T / □** sobre un programa o una subconsola (o **Opciones → Mover de sitio**) lo coge: **←/→** lo colocan y **Intro** lo suelta; se guarda al momento. Vale en la fila del inicio y dentro de una subconsola. Ver *Mover de sitio*. |
+| **Brasas en acordeón** | Estilo nuevo: el aspecto de Brasas con los iconos **en arco, como en Cosmos**. Su altura se cambia en **Brasas · altura de los iconos**. |
+| **Cosmos: altura y marco** | **Apariencia → Cosmos · altura de los iconos** (de −30 % a +30 %, como la de Brasas). Y el icono elegido ya solo lleva el **marco blanco**: fuera el aro lila/azul de fuera. |
+| **Foco del ratón en la fila** | Con el puntero sobre la fila, el aro de foco y el nombre se van al icono que tiene debajo y el elegido con el teclado lo pierde mientras tanto. La fila no se mueve hasta que haces clic; pulsar una tecla o un botón del mando devuelve el foco al icono elegido. |
+| **Programas sin nombre** | **Cambiar nombre…** con el campo vacío deja el icono **sin nombre**. **Volver al nombre original** sigue restaurando el del archivo. |
+| **FPS: sin la palabra «FPS»** | **Opciones → Contador de FPS → Palabra «FPS»**: con *No* sale solo el número. |
+| **FPS: cambia al instante** | Encender o apagar **Mostrar en los juegos** con un juego ya abierto (volviendo con `Alt+Tab`) se nota al momento. Antes solo valía al abrir el siguiente juego. |
+| **Arreglo: pastilla «Jugar»** | La pastilla (o botón) de *Intro para jugar* ya no se queda por encima de los menús (Sistema, Opciones…), de «Iniciando…» ni del navegador. |
 | **Los Buzz! ya no mandan en el launcher** | Con el pincho de los Buzz! enchufado, Windows lo cuenta como un mando más y el launcher cogía «el primer mando que hubiera»: ese era el Buzz y **tu mando dejaba de ir**. Ahora los Buzz se **ignoran del todo en el launcher** (se reconocen por el nombre o por su VID:PID de Sony, 054C:1000 y 054C:0002): manda siempre tu mando. Dentro de los juegos no cambia nada. |
 | **BuzzActivar integrado** | El BuzzActivar de siempre (`launcher/buzz/BuzzActivar.py`, **sin tocar**) se arranca **solo, en segundo plano y sin ventana** cuando el launcher ya ha terminado de arrancar, y se para al cerrarlo; ya no hay que abrirlo aparte. **Opciones → Mandos Buzz**: activar, estado, pitido, reiniciar, instalar hidapi. Ver *Mandos Buzz!*. |
 | **Añadir scripts, no solo .exe** | **Añadir juego** admite `.exe`, `.bat`, `.cmd`, `.ps1`, `.py`, `.pyw`, `.vbs`, `.jar`, accesos directos (`.lnk`, `.url`) y cualquier otro archivo (se abre como con doble clic). Ver *Añadir programas y scripts*. |
@@ -15,7 +24,7 @@ Ya no hay dos launchers que cambiar con W×4: todo se elige en **Opciones → Ap
 | **Tipo de letra independiente del estilo** | **Apariencia → Tipo de letra**: la letra se elige aparte y vale con cualquier estilo (*La del estilo* = como siempre). Hay **6 de Windows** (Segoe UI, Bahnschrift, Consolas, Georgia, Impact, Trebuchet MS), **18 incluidas** (en `assets/fuentes`; licencias en `LICENCIAS.txt`) y las que **añadas tú** con *＋ Añadir tipo de letra…* (`.ttf`, `.otf`, `.woff`, `.woff2`: se copian a `%APPDATA%\gameshell\fuentes`). Cada tarjeta se ve con su propia letra y se puede **eliminar y restaurar** como los estilos y los fondos (la que importaste se borra de verdad; tu archivo original no se toca). |
 | **Ampliación tipo Dock de macOS** (opcional) | **Apariencia → Ampliación al pasar el ratón**: *No* (por defecto) · *Suave* · *Media* · *Fuerte*. Al mover el ratón por la fila, los iconos cercanos crecen y los vecinos se apartan sin pisarse; crecen hacia arriba para no tapar el nombre. Con un menú, el selector inferior o una intro delante se retira sola. |
 | **Brasas: color** | **Apariencia → Brasas · color** (sale con el estilo *o* el fondo Brasas): Fuego (el de siempre), Carmesí, Oro, Lima, Esmeralda, Turquesa, Hielo, Azul, Violeta, Magenta, Rosa y Plata. Cambia las chispas, el resplandor, el marco del icono y los textos. |
-| **Brasas: altura de los iconos** | **Apariencia → Brasas · altura de los iconos** (solo con el *estilo* Brasas): de −30 % a +30 % del alto de la pantalla, de 5 en 5. Mueve juntos los iconos, el nombre y la frase. |
+| **Brasas: altura de los iconos** | **Apariencia → Brasas · altura de los iconos** (con los estilos Brasas y Brasas en acordeón): de −30 % a +30 % del alto de la pantalla, de 5 en 5. Mueve juntos los iconos, el nombre y la frase. |
 | **Intro para jugar, a tu gusto** | **Apariencia → Intro para jugar**: *Mismo del estilo* · *Texto «Intro para jugar»* · *Botón «Jugar»* (el de «···» del PS5) · *Pastilla blanca ▶* (la del PS5 de actualización) · *Nada*. Vale con cualquier estilo (se coloca bajo el nombre). |
 | **Barras: «Nada» y eliminar** | En **Barra inferior** y **Barra superior** hay una tarjeta **Nada** (no se ve ninguna barra) y todas las barras se pueden **eliminar y restaurar** igual que los estilos (*Mismo del estilo* y *Nada* no). |
 | **Probar todos los sonidos** | **Sonidos de los menús**: `□` / `T` oye el timbre marcado entero (los **6 sonidos**: mover, elegir, volver, abrir, tecla y error), `←/→` los oye **de uno en uno** y el **▶** de cada fila lo hace con el ratón. **Sonido de la intro**: `□` / `T` / **▶** la oyen entera sin elegirla. Probar nunca cambia lo elegido; `Intro/✕` elige. |
@@ -60,8 +69,8 @@ Para volver al escritorio normal: `quitar-shell.bat`. Autologin: `autologin-acti
 
 | Menú | Qué hay |
 |---|---|
-| **Opciones → Apariencia** (o el botón **Share** del mando) | Estilo · Fondo · Añadir foto de fondo… · Barra inferior · Barra superior · **Tipo de letra** · **Intro para jugar** · **Tamaño de iconos** · **Ampliación al pasar el ratón** · **Brasas · color / altura** (solo con Brasas) · **Texto de arriba a la izquierda** · Intro · **Precarga Post Intro** (con *Exigir el mando*) · Sonidos · **Restaurar lo eliminado** (solo sale si has eliminado algo) |
-| **Opciones** | **Navegador** · **Resolución de pantalla** · **Contador de FPS** · **Mandos Buzz** · **Buscar actualizaciones** · **Modo Juego** · (lo de cada juego: abrir al iniciar, **cambiar nombre**, cambiar logo, **foto de la derecha (PS5)**, quitar…) |
+| **Opciones → Apariencia** (o el botón **Share** del mando) | Estilo · Fondo · Añadir foto de fondo… · Barra inferior · Barra superior · **Tipo de letra** · **Intro para jugar** · **Tamaño de iconos** · **Ampliación al pasar el ratón** · **Brasas · color / altura** (con Brasas o Brasas en acordeón) · **Cosmos · altura** (solo con Cosmos) · **Texto de arriba a la izquierda** · Intro · **Precarga Post Intro** (con *Exigir el mando*) · Sonidos · **Restaurar lo eliminado** (solo sale si has eliminado algo) |
+| **Opciones** | **Navegador** · **Resolución de pantalla** · **Contador de FPS** · **Mandos Buzz** · **Buscar actualizaciones** · **Modo Juego** · (lo de cada juego: abrir al iniciar, **mover de sitio**, **mover a una subconsola**, **cambiar nombre** —puede quedarse vacío—, cambiar logo, **foto de la derecha (PS5)**, quitar…) |
 | **Esc / ○ → Sistema** | Suspender · Reiniciar · Apagar · Cerrar sesión · Escritorio de Windows · Ajustes del launcher (contraseña, nombre) |
 
 ### Listas largas (intros, fotos…)
@@ -126,7 +135,9 @@ Limitaciones sinceras: no son las extensiones originales, sino un motor propio c
 
 ### Brasas: color y altura
 - **Brasas · color**: 12 colores (el original se llama *Fuego*). Vale con el **estilo** Brasas y con el **fondo** Brasas puesto en cualquier otro estilo (cambia las chispas del fondo y, en el estilo, también el marco, el resplandor y los textos).
-- **Brasas · altura de los iconos**: de −30 % a +30 % de la altura de la pantalla (arriba = positivo). Solo con el **estilo** Brasas, que es el que coloca los iconos; los demás estilos tienen su sitio fijo (para moverlos todos hay **Tamaño de iconos**).
+- **Brasas · altura de los iconos**: de −30 % a +30 % de la altura de la pantalla (arriba = positivo). Vale con los **estilos** Brasas y **Brasas en acordeón**, que son los que colocan los iconos a esa altura.
+- **Cosmos · altura de los iconos**: lo mismo, para el estilo Cosmos (el arco entero baja o sube, con el nombre y la frase). Los demás estilos tienen su sitio fijo (para moverlos todos hay **Tamaño de iconos**).
+- **Brasas en acordeón** es Brasas (mismo fondo, colores y marcos) con la colocación de Cosmos: los iconos en arco, girados según su posición.
 
 ### Intro para jugar
 Es lo que se ve bajo el nombre del programa elegido: la frase «Intro para jugar», el botón «Jugar» del PS5, la pastilla blanca ▶ del PS5 de actualización, o nada (PS3 y PS4). Antes estaba atado al estilo; ahora **Apariencia → Intro para jugar** deja poner cualquiera con cualquier estilo (*Mismo del estilo* = como siempre). Con el estilo que no lo trae de fábrica se dibuja bajo el nombre.
@@ -134,6 +145,8 @@ Es lo que se ve bajo el nombre del programa elegido: la frase «Intro para jugar
 ### Contador de FPS
 **Opciones → Contador de FPS.** Solo hace una cosa: poner **arriba a la derecha, dentro de los juegos**, cuántos FPS tiene el juego.
 - **Mostrar en los juegos**: con «Sí» se **enciende solo** al abrir un juego desde GameShell, sin darle a nada. **Tamaño**: 50 · 75 · 100 · 125 · 150 · 200 · 250 · 300 % con `←/→` (al cambiarlo se ve un ejemplo «144»). **Probar**: lo enseña 4 s.
+- **Palabra «FPS»**: con *No* se ve solo el número (por ejemplo «144» en vez de «144 FPS»).
+- **Cambia al instante**: si con un juego ya abierto vuelves al launcher (`Alt+Tab`) y pones *Mostrar en los juegos* en *No*, el contador se apaga ya (y en *Sí* se enciende ya). Antes solo se miraba al abrir el juego. Cambiar solo el tamaño no apaga un contador que encendiste a mano.
 - **Ctrl+Mayús+F** (dentro del juego): oculta / muestra el número; si estaba apagado, lo arranca solo para esa partida.
 - **Cómo mide**: con **PresentMon** (Intel, licencia MIT), que lee los eventos de «fotograma presentado» que Windows ya genera; no se mete dentro del juego (por eso no da problemas con antitrampas) y sirve para DirectX, OpenGL y Vulkan. **No viene incluido**: en **Contador de FPS → Medidor (PresentMon)** se **descarga** (necesita internet; baja el `PresentMon-*-x64.exe` oficial de GitHub a `%APPDATA%\gameshell\bin`). También puedes dejar tú el `.exe` en `launcher\bin` o en esa carpeta.
 - **Permiso de Windows** (una sola vez): Windows solo deja leer esos eventos a administradores o al grupo «Usuarios del registro de rendimiento» (*Performance Log Users*). **Contador de FPS → Permiso de Windows** te mete en ese grupo: Windows pide confirmar como administrador (la ventana del **Sí / No**) y después hay que **cerrar sesión o reiniciar** para que lo aplique; hasta entonces la fila dice «añadido · falta cerrar sesión». Aunque tu usuario sea administrador, el launcher no corre «elevado», así que también lo necesitas (solo te lo ahorras si abres GameShell como administrador).
@@ -160,6 +173,28 @@ Es lo que se ve bajo el nombre del programa elegido: la frase «Intro para jugar
 - Con un script no se sabe qué `.exe` es «el juego», así que el contador de FPS mide la ventana que tenga el foco.
 - **Abrirlo solo al iniciar** también vale para scripts (siempre se abren; no se puede saber si «ya estaban abiertos» como con un `.exe`).
 - El icono es el que Windows da a ese tipo de archivo; se cambia con **Cambiar logo…** como los demás.
+
+### Subconsolas (carpetas de juegos)
+Una **subconsola** agrupa programas (por ejemplo, todos los juegos de PS2) en una sola ficha de la fila.
+- **Crear**: en la fila, la ficha **Crear subconsola** (la última, detrás de *Añadir juego*) pide un nombre y abre la carpeta vacía.
+- **Cómo se ve**: en la fila es un icono con los de hasta 4 de sus juegos en mosaico (o el logo que le pongas con **Cambiar logo…**). Al abrirla (`Intro`) salen sus juegos como **portadas en cuadrícula con el nombre debajo**. Una portada es el logo que le pusiste al juego con **Cambiar logo…** (si no, sale su icono).
+- **Meter juegos**: dentro de la carpeta, la ficha **Añadir juego**; o, desde la fila, **Opciones de un juego → Mover a una subconsola…** (ahí mismo se puede crear una nueva). Si añades un programa que ya estaba en la lista desde dentro de una carpeta, pasa a ella.
+- **Sacar juegos**: **Opciones del juego → Mover a una subconsola… → Fuera de las subconsolas**.
+- **Moverse por la cuadrícula**: `←/→/↑/↓` (o el pad) · `Intro/✕` juega · `Supr/START` abre las opciones de ese juego · `Esc/○` vuelve a la fila. Con el ratón, el foco sigue al puntero, un clic juega y clic derecho abre las opciones.
+- **Opciones de la subconsola** (desde la fila): *Abrir* · *Cambiar nombre…* · *Cambiar logo…* · *Mover de sitio* · *Quitar subconsola*. Al quitarla **no se pierde ningún juego**: vuelven a la fila del inicio.
+- Un juego que arranca solo con el launcher (*Abrirlo solo al iniciar*) sigue arrancando aunque esté dentro de una carpeta.
+- En `games.json` una subconsola es una entrada con `"folder": true` y sus juegos llevan `"parent": "<id de la subconsola>"`.
+
+### Mover de sitio (reordenar)
+Antes, el orden de los programas quedaba fijado al añadirlos. Ahora:
+- Sobre el icono: **`T` (teclado) o `□` (mando)**, o **Opciones → Mover de sitio**. El icono queda marcado con un borde discontinuo.
+- **`←` / `→`** lo colocan (dentro de una subconsola también `↑` / `↓`). El Navegador y las fichas *Añadir juego* / *Crear subconsola* no se mueven ni se pisan.
+- **`Intro`, `Esc`, `T` o `□`** lo sueltan. Cada paso se guarda al momento en `games.json`.
+- Con el ratón: aparece una barra **◀ nombre ▶ Listo** para colocarlo sin teclado.
+- Se pueden mover los programas y también las subconsolas.
+
+### Foco del ratón en la fila
+Con el puntero sobre la fila, el **aro de foco** y el **nombre** se van al icono que tiene debajo (pasa con o sin *Ampliación al pasar el ratón*). El icono elegido con el teclado deja de llevar el aro mientras tanto. La fila **no se desplaza** por pasar el ratón (si lo hiciera, los iconos se moverían bajo el puntero y la lista saldría corriendo); la selección cambia al hacer clic. Solo cuenta el **movimiento real** del ratón: con el puntero parado encima de la fila, navegar con teclado o mando funciona como siempre, y pulsar cualquier tecla o botón devuelve el foco al icono elegido.
 
 ### Mandos Buzz!
 **Opciones → Mandos Buzz.** Los Buzz! son solo para los juegos (PCSX2…): en el launcher no hacen nada.
@@ -201,7 +236,7 @@ Pulsar `W` cuatro veces seguidas alterna entre **dos aspectos completos** (estil
 
 ## Todo lo que incluye (nada se ha quitado)
 
-**19 estilos** — 7 de `actualizado`: Clásico, PS5, PS3, PS2, Neón, Aurora, Synthwave · 7 de `actualizacion`: Clásico (actualización), PS5 (actualización), PS3 · Onda XMB, PS2 · Torres, Neón (actualización), Cristal, OLED minimal · **5 nuevos**: PS4 · Dinámico, Cyberpunk · Neo-Tokio, Cosmos, Brasas y Sakura (ver abajo).
+**20 estilos** — 7 de `actualizado`: Clásico, PS5, PS3, PS2, Neón, Aurora, Synthwave · 7 de `actualizacion`: Clásico (actualización), PS5 (actualización), PS3 · Onda XMB, PS2 · Torres, Neón (actualización), Cristal, OLED minimal · **6 nuevos**: PS4 · Dinámico, Cyberpunk · Neo-Tokio, Cosmos, Brasas, Brasas en acordeón y Sakura (ver abajo).
 Los de `actualizacion` mantienen su colocación exacta (comprobada icono a icono) y los mismos colores; Clásico es casi idéntico en los dos, pero cada uno lleva sus barras.
 
 **5 barras inferiores** (+ *Nada*) — de `actualizado`: Clásica, PS5, PS3, PS2 (las que ponen `START`) · de `actualizacion`: Teclas y botones (`[Intro] (✕) OK …`).
@@ -217,6 +252,7 @@ Los de `actualizacion` mantienen su colocación exacta (comprobada icono a icono
 - **Cyberpunk · Neo-Tokio** — ciudad de noche con lluvia, carteles de neón y plantas iluminadas en tres capas de edificios; los iconos llevan marco de «mira» (cian; el elegido, amarillo) y el título lleva aberración cromática.
 - **Cosmos** — nebulosa, estrellas que titilan y un planeta; los iconos orbitan en arco, girados según su posición.
 - **Brasas** — oscuridad con chispas que suben de un fuego y se enfrían del amarillo al rojo; el icono elegido arde. Ahora con **12 colores** y la **altura de los iconos** a tu gusto (ver *Brasas*, más abajo).
+- **Brasas en acordeón** — Brasas con los iconos **en arco, como en Cosmos** (mismo fondo, colores y marcos). Su altura es la misma de Brasas (**Brasas · altura de los iconos**).
 - **Sakura** — atardecer con un cerezo en flor, luna y pétalos al viento.
 Cada uno trae también su **timbre de menú** (se elige igual que los demás).
 
@@ -243,6 +279,6 @@ Es un reescalado: **mejora mucho los bordes y los bloques, pero no puede inventa
 - Lo de los **Buzz** y los **scripts** se probó con un Windows y un pincho **simulados** (arranque, avisos, reintentos, apagado, cómo se abre cada tipo de archivo, y que el launcher haga caso a tu mando aunque el Buzz ocupe la primera casilla). **Solo se puede comprobar en tu PC**: el pincho de verdad, que Python (`py` / `python`) lo vea la sesión del usuario que abre GameShell, y la ventana de administrador del permiso de FPS. Si algo falla, `gameshell.log` lo dice («Buzz: …», «FPS: permiso · …», «mando visto: …»).
 
 ## Datos (`%APPDATA%\gameshell`)
-`ui.json` (apariencia, volúmenes, lo eliminado…) · `games.json` · `settings.json` (contraseña) · `fondos\` (tus fotos y sus miniaturas) · `fuentes\` (tus tipos de letra) · `bin\` (PresentMon, si lo descargas) · `iconos\` y `logos\` (logos de juegos: se leen los dos formatos) · `carteles\` (las fotos de la derecha de los estilos PS5) · `bloqueo\` (listas del bloqueador de anuncios) · `sonidos\` (opcional: `ps2`, `ps3`, `ps5`, `ps2boot`) · `permiso-fps.txt` y `fps-permiso.json` (informe del último permiso de FPS y cuándo se dio) · `gameshell.log`.
+`ui.json` (apariencia, volúmenes, lo eliminado…) · `games.json` (programas, subconsolas y su orden) · `settings.json` (contraseña) · `fondos\` (tus fotos y sus miniaturas) · `fuentes\` (tus tipos de letra) · `bin\` (PresentMon, si lo descargas) · `iconos\` y `logos\` (logos de juegos: se leen los dos formatos) · `carteles\` (las fotos de la derecha de los estilos PS5) · `bloqueo\` (listas del bloqueador de anuncios) · `sonidos\` (opcional: `ps2`, `ps3`, `ps5`, `ps2boot`) · `permiso-fps.txt` y `fps-permiso.json` (informe del último permiso de FPS y cuándo se dio) · `gameshell.log`.
 `actualizacion\\` (estado de las actualizaciones y `arranque.log`, el diario del arranque seguro).
 Si algo falla, mira `gameshell.log`. Para probar sin instalar: `npm install` y luego `npm start` (abre el launcher en ventana).

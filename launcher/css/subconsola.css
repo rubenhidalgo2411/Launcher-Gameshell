@@ -1,0 +1,61 @@
+/* GameShell · subconsolas: el icono con mosaico de la fila, la cuadrícula de portadas de dentro y el modo «mover de sitio».
+   Va después de mejoras.css. Todo en medidas calc(N*var(--u)) como el resto, así escala con la pantalla. */
+
+/* ───────────── el icono de una subconsola en la fila ───────────── */
+/* sin logo propio enseña los iconos de hasta 4 de sus juegos; vacía, una carpeta (el SVG lo pinta el .t svg de base.css) */
+.t .mos{width:70%;height:70%;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:6%;align-content:center}
+.t .mos.m1{grid-template-columns:1fr;width:60%;height:60%}
+.t .mos.m2{height:36%}
+[data-theme] .t .mos img{width:100%;height:100%;object-fit:cover;border-radius:18%;filter:none;box-shadow:0 calc(3*var(--u)) calc(10*var(--u)) #0007}
+
+/* ───────────── modo «mover de sitio» ───────────── */
+.t.mv{outline:calc(3*var(--u)) dashed #fff;outline-offset:calc(10*var(--u));filter:drop-shadow(0 calc(22*var(--u)) calc(26*var(--u)) #000b);animation:mvp .9s ease-in-out infinite alternate}
+@keyframes mvp{to{outline-offset:calc(18*var(--u))}}
+#mvbar{position:fixed;left:50%;bottom:calc(92*var(--u));transform:translateX(-50%);display:none;align-items:center;gap:calc(16*var(--u));padding:calc(10*var(--u)) calc(14*var(--u));border-radius:999px;
+  background:#0e1424f2;border:1px solid #ffffff30;color:#fff;font-size:calc(20*var(--u));z-index:6;box-shadow:0 calc(16*var(--u)) calc(44*var(--u)) #000b;white-space:nowrap}
+#mvbar.on{display:flex}
+body.sub-open #mvbar{top:calc(40*var(--u));bottom:auto;left:auto;right:calc(110*var(--u));transform:none}   /* dentro de una subconsola va arriba para no tapar las portadas */
+#mvbar span{padding:0 calc(10*var(--u));max-width:calc(520*var(--u));overflow:hidden;text-overflow:ellipsis}
+#mvbar button{height:calc(46*var(--u));min-width:calc(46*var(--u));padding:0 calc(16*var(--u));border-radius:999px;border:1px solid #ffffff40;background:#ffffff1c;color:#fff;font:inherit;font-weight:600;cursor:pointer;transition:background .15s,color .15s}
+#mvbar button:hover{background:#ffffff40}
+#mvbar button.ok{background:#fff;color:#0b1020;padding:0 calc(26*var(--u))}
+#mvbar button.ok:hover{background:#e8edff}
+
+/* ───────────── la subconsola abierta ───────────── */
+/* capa a pantalla completa (z-index 3, como los menús y el navegador; los menús van detrás en el HTML y quedan por encima). El color sale del de la subconsola (--c) */
+#sc{position:fixed;inset:0;z-index:3;display:none;flex-direction:column;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--c,#5b6cf0) 40%,#0a1030) 0%,color-mix(in srgb,var(--c,#5b6cf0) 22%,#060a1c) 100%);backdrop-filter:blur(26px)}
+#sc.on{display:flex}
+body.sub-open :is(#row,#title,#sub,#tname,#acts,#cta,#hint,#top){visibility:hidden}   /* lo de la fila no se asoma por detrás */
+
+#sch{flex:none;display:flex;align-items:center;gap:calc(26*var(--u));padding:calc(46*var(--u)) calc(110*var(--u)) calc(14*var(--u))}
+#scb{width:calc(58*var(--u));height:calc(58*var(--u));border-radius:50%;border:1px solid #ffffff40;background:#ffffff1c;color:#fff;font:inherit;font-size:calc(28*var(--u));line-height:1;cursor:pointer;transition:background .15s,color .15s}
+#scb:hover{background:#fff;color:#0b1020}
+#sct{margin:0;font-size:calc(46*var(--u));font-weight:600;line-height:1.1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#scn{font-size:calc(24*var(--u));opacity:.6;white-space:nowrap}
+#scm{display:none;padding:calc(6*var(--u)) calc(110*var(--u)) 0;font-size:calc(22*var(--u));opacity:.62}
+
+#scg{flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;scroll-behavior:smooth;padding:calc(34*var(--u)) calc(110*var(--u)) calc(120*var(--u));
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(calc(270*var(--u)),1fr));gap:calc(54*var(--u)) calc(60*var(--u));align-content:start}
+.sc-c{min-width:0;display:flex;flex-direction:column;align-items:center;gap:calc(16*var(--u));cursor:pointer;scroll-margin:calc(70*var(--u)) 0 calc(110*var(--u))}
+.sc-p{position:relative;width:100%;aspect-ratio:3/4;border-radius:calc(8*var(--u));overflow:hidden;display:grid;place-items:center;
+  background:linear-gradient(150deg,color-mix(in srgb,var(--k) 75%,#fff 12%),color-mix(in srgb,var(--k) 45%,#000));box-shadow:0 calc(14*var(--u)) calc(34*var(--u)) #0008;
+  transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s}
+.sc-p img{width:56%;height:56%;object-fit:contain;filter:drop-shadow(0 calc(6*var(--u)) calc(12*var(--u)) #0006)}
+.sc-c.cv .sc-p img{width:100%;height:100%;object-fit:cover;filter:none}                  /* portada puesta con «Cambiar logo…»: ocupa toda la tarjeta */
+.sc-n{position:relative;z-index:1;max-width:100%;font-size:calc(26*var(--u));text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.88;min-height:1.2em}   /* z-index: la sombra de la tarjeta con foco (que se agranda) no debe oscurecer el nombre */
+.sc-c.s .sc-p{transform:scale(1.045);box-shadow:0 0 0 calc(4*var(--u)) #fff,0 calc(26*var(--u)) calc(52*var(--u)) #000b}
+.sc-c.s .sc-n{opacity:1}
+.sc-c.mv .sc-p{outline:calc(3*var(--u)) dashed #fff;outline-offset:calc(10*var(--u));animation:mvp .9s ease-in-out infinite alternate}
+.sc-c.add .sc-p{aspect-ratio:3/4;background:#ffffff0d;border:calc(3*var(--u)) dashed #ffffff55;box-shadow:none}
+.sc-c.add svg{width:30%;height:30%;stroke:#fff;fill:none;stroke-width:1.5;stroke-linecap:round}
+.sc-c.add.s .sc-p{background:#ffffff1c;border-color:#fff;box-shadow:0 0 0 calc(4*var(--u)) #fff,0 calc(26*var(--u)) calc(52*var(--u)) #000b}   /* «Añadir juego» con foco */
+.sc-c[data-a] .sc-p::after,.sc-c[data-h] .sc-p::before{position:absolute;left:50%;transform:translateX(-50%);padding:calc(2*var(--u)) calc(12*var(--u));border-radius:999px;background:#000b;font-size:calc(14*var(--u));white-space:nowrap}
+.sc-c[data-a] .sc-p::after{content:'Arranca solo';bottom:calc(10*var(--u))}
+.sc-c[data-h] .sc-p::before{content:'Oculta';top:calc(10*var(--u));border:1px solid #fff4}
+
+#sch2{position:absolute;z-index:2;left:0;right:0;bottom:0;display:flex;gap:calc(30*var(--u));padding:calc(52*var(--u)) calc(110*var(--u)) calc(26*var(--u));font-size:calc(17*var(--u));color:#ffffffb8;pointer-events:none;
+  background:linear-gradient(0deg,color-mix(in srgb,var(--c,#5b6cf0) 22%,#060a1c) 66%,transparent)}   /* el degradado tapa lo que pasa por debajo al desplazarse */
+#sch2 span{white-space:nowrap}
+
+@media (prefers-reduced-motion:reduce){.t.mv,.sc-c.mv .sc-p{animation:none}#scg{scroll-behavior:auto}}
