@@ -221,7 +221,7 @@ const Mej = (() => {
     const g = gsx(); if (!g) return C.toast('El contador de FPS no está disponible (falta preload-gs.js)');
     let st = st0 || null; if (!st) { try { st = await g.fpsState(); } catch {} }
     st = st || {};
-    const u = C.ui(), back = () => C.opts(C.items()[C.sel()], 'fps'), on = !!u.fpsOn, word = u.fpsWord !== false, size = FPS_SZ.reduce((a, b) => Math.abs(b - (u.fpsSize || 1)) < Math.abs(a - (u.fpsSize || 1)) ? b : a, 1);
+    const u = C.ui(), back = () => C.system('fps'), on = !!u.fpsOn, word = u.fpsWord !== false, size = FPS_SZ.reduce((a, b) => Math.abs(b - (u.fpsSize || 1)) < Math.abs(a - (u.fpsSize || 1)) ? b : a, 1);
     const reopen = k => fpsMenu(k, st), refetch = k => fpsMenu(k);
     const toggle = async () => { await C.setUI({ fpsOn: !on }); C.Sound.ui('ok'); if (!on && st.win32 && !st.tool) C.toast('Falta el medidor: descárgalo en la fila de abajo'); reopen('on'); };
     const step = d => async () => {
@@ -269,7 +269,7 @@ const Mej = (() => {
     let st = st0 || null; if (!st) { try { st = await g.buzzState(); } catch {} }
     st = st || {};
     const u = C.ui(), on = u.buzzOn !== false, beep = u.buzzBeep !== false;
-    const back = () => C.opts(C.items()[C.sel()], 'buzz'), refetch = k => buzzMenu(k);
+    const back = () => C.system('buzz'), refetch = k => buzzMenu(k);
     const here = () => { const h = $('#mn h2'); return !!h && h.textContent === 'Mandos Buzz' && $('#ov').classList.contains('on'); };
     const later = (k, ms) => setTimeout(() => { if (here()) buzzMenu(k); }, ms);          // el estado cambia solo un momento después (arrancar, enlazar…): se vuelve a leer si el menú sigue abierto
     const toggle = async () => { await C.setUI({ buzzOn: !on }); C.Sound.ui('ok'); C.toast(!on ? 'Mandos Buzz activados' : 'Mandos Buzz apagados'); refetch('on'); later('on', 2500); };
@@ -288,25 +288,53 @@ const Mej = (() => {
     C.openMenu('Mandos Buzz', L, at, { back, help: BUZZ_HELP[st.st] || 'Los Buzz solo valen dentro de los juegos: en el launcher manda siempre tu mando' });
   }
 
-  // ───────────────────────── resolución de pantalla (Opciones) ─────────────────────────
+  // ───────────────────────── resolución de pantalla (Sistema) ─────────────────────────
   // La lista sale de Windows (solo los modos que tu pantalla admite). Se aplica «en caliente» y hay 15 s para confirmarla: si no, vuelve sola a la anterior.
+  // Dos ajustes rápidos guardados: M = Moonlight (1920 × 1200 a 120 Hz) y S = 2160p (3840 × 2160 a 120 Hz). Se activan pulsando la letra M o S, en el launcher o dentro de este menú.
+  // La primera vez cada uno pasa por el camino seguro (cuenta atrás de 15 s); una vez confirmado se aplica y se guarda al instante. Se pueden redefinir desde este menú.
   const mode = m => `${m.w} × ${m.h}`;
+  const PRE = { m: 'Moonlight', s: '2160p' };
+  const preCur = (k, cur) => { const p = (C.ui().resPre || {})[k]; return !!(p && cur && cur.w === p.w && cur.h === p.h && cur.hz === p.hz); };
+  const preRow = (k, cur) => { const p = (C.ui().resPre || {})[k] || {}; return `${PRE[k]}<small>${mode(p)} · ${p.hz} Hz · tecla ${k.toUpperCase()}${preCur(k, cur) ? ' · ● activa' : ''}</small>`; };
+  let afterCfm = null;                                   // qué hacer al terminar la confirmación (null = volver al menú de resolución)
+  const leave = () => { const f = afterCfm; afterCfm = null; f ? f() : screenMenu('res', null, true); };
+  const markPre = m => {                                 // un modo confirmado una vez ya no necesita la cuenta atrás en M / S
+    const P = C.ui().resPre || {}, u = {};
+    for (const k of ['m', 's']) if (P[k] && !P[k].ok && P[k].w === m.w && P[k].h === m.h && P[k].hz === m.hz) u[k] = { ...P[k], ok: true };
+    if (Object.keys(u).length) C.setUI({ resPre: u });
+  };
+  async function applyPre(k, home) {                     // home: desde la pantalla de inicio (sin menú detrás) · si no, desde el menú de resolución
+    const g = gsx(); if (!g) return C.toast('El cambio de resolución no está disponible (falta preload-gs.js)');
+    const p = (C.ui().resPre || {})[k]; if (!p) return;
+    const back = () => { if (!home) screenMenu(k === 'm' ? 'pm' : 'ps', null, true); };
+    const fail = msg => { C.toast(PRE[k] + ': ' + msg); C.Sound.ui('err'); back(); };
+    if (p.ok) {                                          // ya confirmado antes: se aplica y se guarda al momento
+      const r = await g.screenDirect(p.w, p.h, p.hz).catch(e => ({ ok: false, msg: String(e && e.message || e) }));
+      if (!r || !r.ok) return fail((r && r.msg) || 'no se pudo cambiar');
+      C.toast(`${PRE[k]} · ${mode(p)} · ${p.hz} Hz`); C.Sound.ui('ok'); return back();
+    }
+    const r = await g.screenSet(p.w, p.h, p.hz).catch(e => ({ ok: false, msg: String(e && e.message || e) }));   // la primera vez, por el camino seguro
+    if (!r || !r.ok) return fail((r && r.msg) || 'no se pudo cambiar');
+    C.closeMenu(); confirmMenu({ w: p.w, h: p.h, hz: p.hz }, null, r.wait || 15, home ? () => C.closeMenu() : null);
+  }
   async function screenMenu(at = 'res', keep, quiet) {          // quiet: al volver de un cambio no se tapa el aviso («Resolución guardada»…) con el de «leyendo»
     const g = gsx(); if (!g) return C.toast('El cambio de resolución no está disponible (falta preload-gs.js)');
     if (!quiet) C.toast('Leyendo las resoluciones de tu pantalla…');
     const d = await g.screenList().catch(e => ({ ok: false, msg: String(e && e.message || e) }));
-    if (!d || !d.ok) { C.toast((d && d.msg) || 'No se pudo leer la pantalla'); return C.opts(C.items()[C.sel()], 'res'); }
+    if (!d || !d.ok) { C.toast((d && d.msg) || 'No se pudo leer la pantalla'); return C.system('res'); }
     if (d.pending) return confirmMenu(d.pending, null);   // un cambio sin confirmar (p. ej. tras recargar): se vuelve a preguntar
     const sizes = []; for (const m of d.modes) if (!sizes.some(s => s.w === m.w && s.h === m.h)) sizes.push({ w: m.w, h: m.h, hz: d.modes.filter(x => x.w === m.w && x.h === m.h).map(x => x.hz).sort((a, b) => b - a) });
     let si = Math.max(0, sizes.findIndex(s => s.w === (keep || d.cur).w && s.h === (keep || d.cur).h)), hi = Math.max(0, sizes[si].hz.indexOf((keep || d.cur).hz));
-    const back = () => C.opts(C.items()[C.sel()], 'res');
+    const back = () => C.system('res');
     const hzTxt = () => sizes[si].hz[hi] ? sizes[si].hz[hi] + ' Hz' : 'automática';
     const same = () => sizes[si].w === d.cur.w && sizes[si].h === d.cur.h && sizes[si].hz[hi] === d.cur.hz;
     const lines = () => ({ res: `Resolución<small>‹ ${mode(sizes[si])} ›</small>`, hz: `Frecuencia<small>‹ ${hzTxt()} ›</small>` });
+    const saveTxt = k => `Guardar esta selección en ${k.toUpperCase()}<small>${PRE[k]} · ${mode(sizes[si])} · ${hzTxt()}</small>`;
     const move = (which, dlt) => {
       if (which === 'res') { si = (si + dlt + sizes.length) % sizes.length; const want = d.cur.hz; const j = sizes[si].hz.indexOf(want); hi = j >= 0 ? j : 0; }
       else hi = (hi + dlt + sizes[si].hz.length) % sizes[si].hz.length;
-      const t = lines(); C.rowHtml(0, t.res); C.rowHtml(1, t.hz); C.rowHtml(2, `Aplicar<small>${same() ? 'es la que ya tienes' : mode(sizes[si]) + ' · ' + hzTxt()}</small>`);
+      const t = lines(); C.rowHtml(2, t.res); C.rowHtml(3, t.hz); C.rowHtml(4, `Aplicar<small>${same() ? 'es la que ya tienes' : mode(sizes[si]) + ' · ' + hzTxt()}</small>`);
+      C.rowHtml(5, saveTxt('m')); C.rowHtml(6, saveTxt('s'));
     };
     const apply = async () => {
       if (same()) return C.toast('Esa ya es la resolución actual');
@@ -315,24 +343,34 @@ const Mej = (() => {
       if (!r || !r.ok) { C.toast((r && r.msg) || 'No se pudo cambiar'); C.Sound.ui('err'); return screenMenu('apply', m, true); }
       confirmMenu(m, d.cur, r.wait || 15);
     };
+    const savePre = k => async () => {                    // lo elegido arriba pasa a ser el ajuste rápido M o S
+      const m = { w: sizes[si].w, h: sizes[si].h, hz: sizes[si].hz[hi] || 0 };
+      if (!m.hz) { C.toast('Elige una frecuencia concreta (no «automática»)'); return screenMenu('save' + k, m, true); }
+      await C.setUI({ resPre: { [k]: { ...m, ok: same() } } });   // si ya es la que tiene la pantalla, queda como confirmada
+      C.toast(`${PRE[k]} (tecla ${k.toUpperCase()}): ${mode(m)} · ${m.hz} Hz`); screenMenu('save' + k, m, true);
+    };
     const t = lines();
     C.openMenu('Resolución de pantalla', [
-      [t.res, apply, '', dl => move('res', dl), 'res'], [t.hz, apply, '', dl => move('hz', dl), 'hz'],
+      [preRow('m', d.cur), () => applyPre('m'), '', null, 'pm'], [preRow('s', d.cur), () => applyPre('s'), '', null, 'ps'],
+      [t.res, apply, 'sep', dl => move('res', dl), 'res'], [t.hz, apply, '', dl => move('hz', dl), 'hz'],
       [`Aplicar<small>${same() ? 'es la que ya tienes' : mode(sizes[si]) + ' · ' + hzTxt()}</small>`, apply, '', null, 'apply'],
+      [saveTxt('m'), savePre('m'), '', null, 'savem'], [saveTxt('s'), savePre('s'), '', null, 'saves'],
       ['Volver', back, '', null, 'back']
-    ], at, { back, help: `Ahora: ${mode(d.cur)} · ${d.cur.hz} Hz${d.reg && (d.reg.w !== d.cur.w || d.reg.h !== d.cur.h || d.reg.hz !== d.cur.hz) ? ' · guardada en Windows: ' + mode(d.reg) : ''}` });
+    ], at, { back, onKey: k => { k = String(k).toLowerCase(); if (k === 'm' || k === 's') applyPre(k); },
+      help: `Ahora: ${mode(d.cur)} · ${d.cur.hz} Hz · pulsa M o S para cambiar al momento${d.reg && (d.reg.w !== d.cur.w || d.reg.h !== d.cur.h || d.reg.hz !== d.cur.hz) ? ' · guardada en Windows: ' + mode(d.reg) : ''}` });
   }
   let cd = 0, onEnd = false;
-  function confirmMenu(m, before, wait = 15) {
-    const g = gsx(); let left = wait, done = false;
+  function confirmMenu(m, before, wait = 15, after = null) {   // after: qué hacer al terminar (si no, se vuelve al menú de resolución)
+    const g = gsx(); let left = wait, done = false; afterCfm = after;
     const end = async (keepIt) => {
       if (done) return; done = true;                       // dos pulsaciones seguidas no repiten nada
       clearInterval(cd); cd = 0;
       const r = await (keepIt ? g.screenKeep() : g.screenRevert()).catch(e => ({ ok: false, msg: String(e && e.message || e) }));
+      if (keepIt && r.ok) markPre(m);
       C.toast(keepIt ? (r.ok ? 'Resolución guardada' : (r.msg || 'No se pudo guardar')) : (r.ok ? 'Se volvió a la resolución anterior' : (r.msg || 'No se pudo volver')));
-      screenMenu('res', null, true);
+      leave();
     };
-    if (!onEnd) { onEnd = true; g.onScreenEnd(d => { if (!cd) return; clearInterval(cd); cd = 0; C.closeMenu(); C.toast((d && d.msg) || 'Se volvió a la resolución anterior'); C.Sound.ui('back'); screenMenu('res', null, true); }); }
+    if (!onEnd) { onEnd = true; g.onScreenEnd(d => { if (!cd) return; clearInterval(cd); cd = 0; C.closeMenu(); C.toast((d && d.msg) || 'Se volvió a la resolución anterior'); C.Sound.ui('back'); leave(); }); }
     const help = () => `${mode(m)} · ${m.hz} Hz · si no confirmas, vuelve sola a la anterior en ${left} s`;
     C.openMenu('¿Mantener esta resolución?', [['Mantener esta resolución', () => end(true), '', null, 'keep'], [`Volver a la anterior<small>${before ? mode(before) : ''}</small>`, () => end(false), '', null, 'revert']], 'revert',
       { back: () => end(false), help: help() });
@@ -349,6 +387,7 @@ const Mej = (() => {
     dock: { apply: dockApply, set: dockSet, kick: dockKick, active: () => dk.act > 0, hover, reset: hoverReset, leave: hoverLeave },
     ember: { apply: applyEmber },
     tab: { cards, preview, patch, label, restore },
-    fpsMenu, screenMenu, buzzMenu
+    fpsMenu, screenMenu, buzzMenu,
+    resKey: k => { k = String(k).toLowerCase(); if (k !== 'm' && k !== 's') return false; applyPre(k, true); return true; }   // letra M o S en el launcher: ajuste rápido de resolución
   };
 })();

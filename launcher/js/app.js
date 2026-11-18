@@ -23,7 +23,7 @@ let UI = { theme: 'classic', name: 'GameShell', bg: '', intro: 'ps2-boot', intro
   tile: 1, tabText: 'Juegos', webText: 'Web', webAds: true, webYt: true, webSb: true, webCookies: true, webOsk: true,
   play: 'auto', font: 'auto', dock: 0, emberY: 0, emberHue: 0, emberSat: 1, cosmosY: 0, fpsOn: false, fpsSize: 1, fpsWord: true, buzzOn: true, buzzBeep: true,   // «Intro para jugar», tipo de letra, ampliación, altura/color de Brasas, contador de FPS, mandos Buzz (se activan solos / pitido)
   hide: { theme: [], bg: [], intro: [], bar: [], top: [], font: [] }, gone: { theme: [], bg: [], intro: [], bar: [], top: [], font: [] } };
-let F = [], FALL = [];                        // F: fondos que salen en los selectores (los de assets/fondos + las fotos importadas, menos los eliminados) · FALL: todos
+let F = [], FP = [], FALL = [];                        // F: fondos que salen en los selectores (los de assets/fondos + las fotos importadas, menos los eliminados) · FALL: todos
 let items = [], LIB = [], sel = 0, mode = 'home', menu = null, wv, gameOn = false, pmode = false, theme = '', stopFx = null, cur = '', tray = null, fxbMode = '', fxId = '', curBg = '', tileS = 1;
 const live = () => !gameOn || document.hasFocus(); // con un juego abierto y el launcher sin foco, se ignora el mando y el teclado
 // lo «eliminado» desde el launcher (estilos, fondos e intros): no sale en los selectores, pero no se borra del disco y se puede restaurar
@@ -151,6 +151,8 @@ const fxIdFor = (bg, th) => { const m = typeof bg === 'string' && bg.startsWith(
 // intros: [nombre, de cuál viene]. photo = la foto elegida en «Foto de la intro»; b-photo = el fondo que tengas puesto
 const INTROS = {
   'ps2-boot': ['PS2 · Arranque', N_],
+  'ps4-polvo': ['PS4 · Polvo de luz', N_], 'cyber-glitch': ['Cyberpunk · Glitch', N_], 'cosmos-orbita': ['Cosmos · Órbita', N_],
+  'brasas-ignicion': ['Brasas · Ignición', N_], 'sakura-petalos': ['Sakura · Pétalos', N_], 'retro-arcade': ['Retro · Arcade', N_],
   classic: ['Clásica', A_], ps2: ['PS2', A_], ps3: ['PS3', A_], ps5: ['PS5', A_], neon: ['Neón', A_], photo: ['Foto', A_],
   'b-ps2': ['PS2 · Torres', B_], 'b-ps5': ['PS5 · Símbolos', B_], 'b-ps3': ['PS3 · Onda', B_], 'b-photo': ['Foto de fondo', B_], 'b-text': ['Solo el nombre', B_],
   none: ['Sin intro', '']
@@ -159,7 +161,9 @@ const INTROS = {
 const FLAVORS = { classic: 'Clásico', ps5: 'PS5', ps3: 'PS3', ps2: 'PS2', neon: 'Neón', aurora: 'Aurora', synth: 'Synthwave', ps4: 'PS4', cyber: 'Cyberpunk', cosmos: 'Cosmos', ember: 'Brasas', sakura: 'Sakura' };
 const FL_NEW = new Set(['ps4', 'cyber', 'cosmos', 'ember', 'sakura']); // timbres nuevos
 const ISRC = { 'wav:ps2boot': ['PS2 · Arranque', N_], classic: ['Clásica', A_], ps2: ['PS2', A_], ps3: ['PS3', A_], ps5: ['PS5', A_], neon: ['Neón', A_],
-  'wav:ps2': ['PS2 · Torres', B_], 'wav:ps3': ['PS3 · Onda', B_], 'wav:ps5': ['PS5 · Símbolos', B_] };
+  'wav:ps2': ['PS2 · Torres', B_], 'wav:ps3': ['PS3 · Onda', B_], 'wav:ps5': ['PS5 · Símbolos', B_],
+  'wav:ps4-pulso': ['PS4 · Pulso', N_], 'wav:neotokio': ['Neo-Tokio · Sintetizador', N_], 'wav:cosmos-eco': ['Cosmos · Eco', N_],
+  'wav:brasas': ['Brasas · Ignición', N_], 'wav:sakura-koto': ['Sakura · Koto', N_], 'wav:retro-8bits': ['Retro · 8 bits', N_] };
 const ORG = { [A_]: 'actualizado', [B_]: 'actualización', [N_]: 'nuevo', '': '' };
 
 // barras. Cada una es una variante de css/bars.css. «auto» = la que le toca al estilo (THEMES[...].bar / .top)
@@ -258,14 +262,15 @@ function applyTabs() {
   b.textContent = a; b.style.display = a ? '' : 'none'; w.textContent = c; w.style.display = c ? '' : 'none';
 }
 async function setUI(p) { try { UI = { ...UI, ...(await api.uiSet(p)) }; } catch {} applyUI(); } // se mezcla con lo que ya hay, así nunca falta un ajuste
-const refreshF = () => { F = FALL.filter(f => !hid('bg', f.id)); };
+const refreshF = () => { F = FALL.filter(f => !f.pre && !hid('bg', f.id)); FP = FALL.filter(f => f.pre && !hid('bg', f.id)); };   // las pantallas de Precarga (pre) solo salen en Precarga Post Intro → Foto
 async function loadFondos() { try { FALL = await api.fondos(); } catch { FALL = []; } refreshF(); }
 async function loadSounds(quick) { // quick: en el arranque solo se espera al sonido que necesita la intro; el resto se decodifica en segundo plano
   try { Sound.wav(await api.sounds()); } catch {}
   // los wav se decodifican una vez: suenan por WebAudio (volumen real y limitador). Si alguno falla, suena con <audio> como siempre
-  const names = ['ps2boot', 'ps2', 'ps3', 'ps5'], dec = async n => { try { const d = await api.soundData(n); if (d) await Sound.decode(n, d); } catch {} };
+  const names = Object.keys(ISRC).filter(k => k.startsWith('wav:')).map(k => k.slice(4)), dec = async n => { try { const d = await api.soundData(n); if (d) await Sound.decode(n, d); } catch {} };
   const src = UI.introSndSrc !== 'auto' && ISRC[UI.introSndSrc] ? UI.introSndSrc : (Intro.snd(UI.intro) || ''), want = /^wav:/.test(src) ? src.slice(4) : '';
-  const first = names.includes(want) ? dec(want) : Promise.resolve(), rest = Promise.all(names.filter(n => n !== want).map(dec));
+  // el de la intro, primero; los demás de uno en uno y sin prisa (son una decena de archivos: así no se nota en la animación del arranque)
+  const first = names.includes(want) ? dec(want) : Promise.resolve(), rest = (async () => { for (const n of names.filter(n => n !== want)) { await dec(n); if (quick) await new Promise(r => setTimeout(r, 120)); } })();
   await first;
   if (!quick) await rest;
 }
@@ -491,7 +496,7 @@ function askRemoveSub(it) {
   ], 1, { back, help: 'No se borra ningún juego: salen otra vez en la fila del inicio' });
 }
 
-// Opciones (Supr / START): lo del programa seleccionado + apariencia, tecla Windows y modo juego
+// Opciones (Supr / START): lo del programa seleccionado + Apariencia y Navegador. Lo del equipo (pantalla, Bluetooth, FPS, Buzz, actualizaciones, Modo Juego) está en Sistema (Esc / ○)
 function opts(it, i0 = 0) {
   const L = [];
   if (it.t === 'sub') { // una subconsola: abrirla, nombre, logo, sitio y quitarla
@@ -522,21 +527,12 @@ function opts(it, i0 = 0) {
       const r = await api.icon(it.id);
       if (r === true) { toast('Logo cambiado'); await refresh(); } else if (r) toast(r === 'grande' ? 'Esa imagen pesa demasiado' : 'No se pudo cambiar el logo'); }]);
     if (it.cover) L.push(['Quitar logo personalizado', async () => { await api.iconOff(it.id); toast('Logo original restaurado'); await refresh(); }]);
-    // la foto grande de la derecha de los estilos PS5: por defecto es el logo del .exe, pero puede ser otra distinta
-    L.push([`Foto de la derecha (estilos PS5)…<small>${it.hero ? 'otra foto' : 'la del programa'}</small>`, async () => {
-      const r = await api.hero(it.id);
-      if (r === true) { toast('Foto de la derecha cambiada'); await refresh(); } else if (r) toast(r === 'grande' ? 'Esa imagen pesa demasiado' : 'No se pudo cambiar la foto'); }]);
-    if (it.hero) L.push(['Quitar la foto de la derecha', async () => { await api.heroOff(it.id); toast('Vuelve a salir la del programa'); await refresh(); }]);
     if (pmode) L.push([it.hidden ? 'Mostrar en el launcher' : 'Ocultar del launcher', async () => {
       await api.hide(it.id, !it.hidden); toast(it.hidden ? 'Ahora se muestra en el launcher' : 'Oculta del launcher'); await refresh(); }]);
     L.push(['Quitar de la lista', async () => { await api.remove(it.id); if (mode !== 'sub') sel = Math.max(0, sel - 1); await refresh(); }]);
   }
   L.push(['Apariencia', () => appearance(0, 'apr'), 'sub', null, 'apr'], ['Navegador<small>anuncios · SponsorBlock · teclado</small>', () => webMenu(0, 'opts'), 'sub', null, 'web'],
-    ['Resolución de pantalla<small>sin salir a Windows</small>', () => Mej.screenMenu(), 'sub', null, 'res'],
-    [`Contador de FPS<small>${UI.fpsOn ? 'activado' : 'apagado'}</small>`, () => Mej.fpsMenu(), 'sub', null, 'fps'],
-    [`Mandos Buzz<small>${UI.buzzOn === false ? 'apagados' : 'se activan solos'}</small>`, () => Mej.buzzMenu(), 'sub', null, 'buzz'],
-    ['Buscar actualizaciones<small>desde GitHub</small>', () => GSUpd.menu(), 'sub', null, 'upd'],
-    ['Modo Juego', gameMode], ['Cancelar']);
+    ['Sistema<small>Esc · pantalla, Bluetooth, FPS, actualizaciones…</small>', () => power(), 'sub', null, 'sys'], ['Cancelar']);
   openMenu(it.t === 'game' || it.t === 'sub' ? (it.name || it.orig || 'Programa') : 'Opciones', L, i0);
 }
 // Modo Juego = el launcher como arranca al encender: corta los dos modos secretos (R×8: sin contraseña, P×8: apps ocultas) si estaban puestos,
@@ -548,10 +544,65 @@ const gameMode = async () => {
   if (was) await refresh(); // las ocultas vuelven a esconderse
 };
 
-const power = () => openMenu('Sistema', [
-  ['Suspender', () => api.power('sleep')], ['Reiniciar', () => api.power('restart')],
-  ['Apagar', () => api.power('off')], ['Cerrar sesión', () => api.power('logout')],
-  ['Escritorio de Windows', toDesktop], ['Ajustes del launcher', () => settings()], ['Cancelar']]);
+// Sistema (Esc / ○ / el botón de apagar): el equipo. Energía · escritorio de Windows · pantalla y Bluetooth · FPS y Buzz · Modo Juego, actualizaciones y ajustes del launcher.
+// Los submenús que cuelgan de aquí (Resolución, FPS, Buzz, Actualizaciones) vuelven a su fila con power('res'|'fps'|'buzz'|'upd').
+const SYS = { shell: false };   // ¿GameShell es la shell de Windows? Solo entonces se ofrece «Cerrar el escritorio de Windows»
+const refreshSys = () => { try { if (window.gsx && gsx.deskState) gsx.deskState().then(r => { if (r) SYS.shell = !!r.shell; }).catch(() => {}); } catch {} };
+function power(at = 0) {
+  refreshSys();
+  openMenu('Sistema', [
+    ['Suspender', () => api.power('sleep'), '', null, 'sleep'], ['Reiniciar', () => api.power('restart')],
+    ['Apagar', () => api.power('off')], ['Cerrar sesión', () => api.power('logout')],
+    ['Escritorio de Windows', toDesktop, 'sep', null, 'desk'],
+    ...(SYS.shell ? [['Cerrar el escritorio de Windows<small>como si no se hubiera abierto</small>', () => askCloseDesktop(), '', null, 'closedesk']] : []),
+    ['Resolución de pantalla<small>M · S: ajustes rápidos</small>', () => Mej.screenMenu(), 'sub sep', null, 'res'],
+    ['Bluetooth<small>sin salir a Windows</small>', () => btMenu(), 'sub', null, 'bt'],
+    [`Contador de FPS<small>${UI.fpsOn ? 'activado' : 'apagado'}</small>`, () => Mej.fpsMenu(), 'sub', null, 'fps'],
+    [`Mandos Buzz<small>${UI.buzzOn === false ? 'apagados' : 'se activan solos'}</small>`, () => Mej.buzzMenu(), 'sub', null, 'buzz'],
+    ['Modo Juego', gameMode, 'sep', null, 'game'],
+    ['Buscar actualizaciones<small>desde GitHub</small>', () => GSUpd.menu(), 'sub', null, 'upd'],
+    ['Ajustes del launcher', () => settings(), '', null, 'set'], ['Cancelar']
+  ], at);
+}
+// «Cerrar el escritorio de Windows»: mata explorer.exe (solo si GameShell es la shell) y vuelve al launcher. Pregunta antes porque cierra también las ventanas del Explorador.
+function askCloseDesktop() {
+  const back = () => power('closedesk');
+  openMenu('¿Cerrar el escritorio de Windows?', [
+    ['Cerrar el escritorio', async () => {
+      const r = await gsx.deskClose().catch(() => null);
+      if (!r || !r.ok) { toast((r && r.msg) || 'No se pudo cerrar el escritorio'); Sound.ui('err'); } else toast(r.was ? 'Escritorio de Windows cerrado' : 'El escritorio ya estaba cerrado');
+    }],
+    ['Cancelar', back]
+  ], 1, { back, help: 'Cierra el escritorio, la barra de tareas y las ventanas del Explorador · desde el escritorio: Ctrl+Alt+Mayús+H' });
+}
+// Bluetooth sin salir a Windows: el asistente de emparejar, o los ajustes de Bluetooth de Windows (con contraseña si la hay)
+function btMenu(at = 'pair') {
+  const back = () => power('bt');
+  const go = kind => async () => {
+    let pw = '';
+    if (kind === 'settings') { pw = await gate('Contraseña para abrir los ajustes de Bluetooth'); if (pw === null) return btMenu('settings'); }
+    const r = await gsx.btOpen(kind, pw).catch(() => null);
+    if (r && r.pw) { toast('Contraseña incorrecta'); Sound.ui('err'); return btMenu('settings'); }
+    if (!r || !r.ok) { toast((r && r.msg) || 'No se pudo abrir Bluetooth'); Sound.ui('err'); }
+  };
+  openMenu('Bluetooth', [
+    ['Emparejar un dispositivo<small>mandos, auriculares…</small>', go('pair'), '', null, 'pair'],
+    ['Ajustes de Bluetooth<small>conectar, quitar, ver baterías</small>', go('settings'), '', null, 'settings'],
+    ['Volver', back]
+  ], at, { back, help: 'Se abre sin salir al escritorio · al cerrar la ventana vuelves aquí (o con Alt+Tab / Ctrl+Mayús+H)' });
+}
+// «Foto de la derecha» de los estilos PS5: por defecto es el logo del programa, pero puede ser otra distinta. Es del programa que tenías marcado al abrir Apariencia.
+function heroMenu(id, pj) {
+  const it = LIB.find(x => x.id === id); if (!it) return appearance('hero', pj);
+  const back = () => appearance('hero', pj), nm = it.name || it.orig || 'el programa';
+  const L = [[`Elegir otra foto…<small>para «${esc(nm)}»</small>`, async () => {
+    const r = await api.hero(it.id);
+    if (r === true) { toast('Foto de la derecha cambiada'); await refresh(); } else if (r) toast(r === 'grande' ? 'Esa imagen pesa demasiado' : 'No se pudo cambiar la foto');
+    heroMenu(id, pj); }, '', null, 'pick']];
+  if (it.hero) L.push(['Quitar la foto de la derecha<small>vuelve a salir la del programa</small>', async () => { await api.heroOff(it.id); toast('Vuelve a salir la del programa'); await refresh(); heroMenu(id, pj); }, '', null, 'off']);
+  L.push(['Volver', back]);
+  openMenu('Foto de la derecha', L, 0, { back, help: 'La foto grande que sale a la derecha en los estilos PS5 · cada programa tiene la suya' });
+}
 
 // ───────────────────────── apariencia ─────────────────────────
 const bgName = id => !id ? 'Del estilo' : id.startsWith(FX_ID) ? fxName(id.slice(FX_ID.length)) : ((FALL.find(f => f.id === id) || {}).name || 'Del estilo');
@@ -633,9 +684,11 @@ function restoreMenu(pj, at = 0) {
 }
 
 function appearance(at = 'theme', pj = 0) {
-  const back = () => opts(curItem(), pj), nh = hiddenCount();
+  const back = () => opts(curItem(), pj), nh = hiddenCount(), th = THEMES[UI.theme] || {}, cit = curItem(), cg = cit && cit.t === 'game' ? cit : null;
   const L = [
     [`Estilo<small>${esc(themeName(UI.theme))}</small>`, () => openTray('theme', pj), 'sub', null, 'theme'],
+    // la foto grande de la derecha solo existe en los estilos PS5: la fila sale al elegir uno de ellos (es la del programa que tenías marcado)
+    ...(th.hero || th.bhero ? [[`Foto de la derecha (PS5)<small>${cg ? esc(cg.name || cg.orig || 'programa') + ' · ' + (cg.hero ? 'otra foto' : 'la del programa') : 'marca un juego'}</small>`, () => cg ? heroMenu(cg.id, pj) : toast('Marca un juego para cambiar su foto de la derecha'), 'sub', null, 'hero']] : []),
     [`Fondo<small>${esc(bgName(UI.bg))}</small>`, () => openTray('bg', pj), 'sub', null, 'bg'],
     ['Añadir foto de fondo…', async () => { await addPhoto(); appearance('addbg', pj); }, '', null, 'addbg'],
     [`Barra inferior<small>${esc(barLabel(UI.bar, BARS))}</small>`, () => openTray('bar', pj), 'sub', null, 'bar'],
@@ -650,7 +703,8 @@ function appearance(at = 'theme', pj = 0) {
     [`Texto de arriba a la izquierda<small>${esc(UI.tabText ? '«' + UI.tabText + '»' : 'Sin texto')}</small>`, () => tabsMenu(pj), 'sub', null, 'tabs'],
     [`Intro<small>${esc(introLabel())}</small>`, () => pickIntro(UI.intro, pj), 'sub', null, 'intro'],
     [`Precarga Post Intro<small>${esc(UI.psWait ? 'Sí · ' + pswName() : 'No')}</small>`, () => precarga('on', pj), 'sub', null, 'ps'],
-    [`Sonidos<small>${esc(menuSndName())}</small>`, () => sonidos('menusnd', pj), 'sub', null, 'sounds']
+    [`Sonidos<small>${esc(menuSndName())}</small>`, () => sonidos('menusnd', pj), 'sub', null, 'sounds'],
+    [`Carrusel de aspectos<small>${esc(Look.label())}</small>`, () => Look.menu(0, pj), 'sub', null, 'carousel']
   ];
   if (nh) L.push([`Restaurar lo eliminado<small>${nh}</small>`, () => restoreMenu(pj), 'sub', null, 'restore']);
   L.push(['Volver', back, '', null, 'back']);
@@ -703,7 +757,8 @@ async function pickPswBg(pj) {
   const def = FALL.find(x => /ps5-bienvenida/.test(x.id)), now = UI.pswBg || (def ? def.id : ''), L = [], ids = [];
   const back = () => precarga('foto', pj);
   const done = async id => { await setUI({ pswBg: def && id === def.id ? '' : id }); await PSW.show({ force: true, preview: true }); pickPswBg(pj); };
-  F.forEach(f => { ids.push(f.id); L.push([lb(f.id === now, f.name, f.user ? '<small>Mía</small>' : def && f.id === def.id ? '<small>La de siempre</small>' : ''), () => done(f.id)]); });
+  const first = F.find(f => def && f.id === def.id);
+  [...(first ? [first] : []), ...FP, ...F.filter(f => f !== first)].forEach(f => { ids.push(f.id); L.push([lb(f.id === now, f.name, f.user ? '<small>Mía</small>' : def && f.id === def.id ? '<small>La de siempre</small>' : f.pre ? '<small>Pantalla</small>' : ''), () => done(f.id)]); });
   L.push(['Importar foto…', async () => {
     const n = await api.fondoAdd();
     if (!n.length) return pickPswBg(pj);
@@ -1041,7 +1096,8 @@ const PSW = (() => {
         $('#pswbg').style.backgroundImage = f ? `url("${f.url}")` : '';
         $('#pswmsg').textContent = strict ? 'Enciende el mando para continuar · pulsa el botón PS' : !f ? 'Pulsa el botón PS del mando para encenderlo' : std ? 'Pulsa cualquier tecla para saltar' : 'Enciende el mando para continuar · o pulsa cualquier tecla';
         on = true; ok = false; res = r;
-        el.className = 'on' + (f ? '' : ' fb');
+        el.className = 'on' + (f ? '' : ' fb') + (f && f.pre ? ' pre' : '');
+        if (f && f.pre) { $('#pswt b').textContent = UI.name || 'GameShell'; $('#pswt small').textContent = 'Te damos la bienvenida de nuevo'; }   // las pantallas pensadas para la Precarga: con el nombre del launcher
         if (!prev) {
           iv = setInterval(() => { if (anyPad()) connected(); }, 200);
           if (api.padState) api.padState().then(s => { if (s && s.on) connected(); }).catch(() => {}); // ¿Windows ya ve un mando encendido?
@@ -1162,6 +1218,7 @@ function act(a) {
   if (OSK.isOpen) return OSK.act(a);
   if (a === 'share') return openAppearance();
   if (a === 'tri' || a === 'start') a = 'opt';
+  if ((a === 'l2' || a === 'r2') && homeIdle()) return Look.step(a === 'r2' ? 1 : -1, true);   // L2 / R2: aspecto anterior / siguiente del carrusel
   if (tray) return trayAct(a);
   if (menu) {
     const m = menu, n = m.list.length;
@@ -1243,6 +1300,13 @@ addEventListener('keydown', e => {
   if (PSW.active) { e.preventDefault(); return PSW.key(e); }
   if (e.target.tagName === 'INPUT') return;
   secret(e);
+  // Ctrl+← / Ctrl+→: aspecto anterior / siguiente del carrusel (Apariencia → Carrusel de aspectos). Solo con el launcher a la vista y sin nada abierto
+  if (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && homeIdle()) { e.preventDefault(); if (!e.repeat) Look.step(e.key === 'ArrowRight' ? 1 : -1, true); return; }
+  // letras M y S: los dos ajustes rápidos de resolución (Moonlight y 2160p). También valen dentro del menú de resolución
+  if (!e.ctrlKey && !e.altKey && !e.metaKey && !e.repeat && /^[msMS]$/.test(e.key)) {
+    if (menu && menu.o.onKey) { e.preventDefault(); return menu.o.onKey(e.key); }
+    if (homeIdle()) { e.preventDefault(); return void Mej.resKey(e.key); }
+  }
   const a = K[e.key]; if (a) { e.preventDefault(); if (a === 'sq' && e.repeat) return; act(a); }
 });
 $('#row').onclick = e => { if (tray || Sub.moving()) return; const t = e.target.closest('.t'); if (!t) return; const i = +t.dataset.i; if (i === sel) act('ok'); else { sel = i; Sound.ui('move'); show(); } };
@@ -1302,10 +1366,31 @@ const tick = () => {
 tick(); setInterval(tick, 1000);
 addEventListener('resize', () => { scale(); items.length && show(); tray && trayMove(false); });
 
+// ── carrusel de aspectos (js/aspectos.js) ──
+// «launcher a la vista y sin nada abierto»: cuando valen Ctrl+←/→ (o L2/R2), las letras M y S, y el cambio solo cada cierto tiempo
+// (una pulsación del usuario ya demuestra que hay foco; el cambio solo por tiempo sí exige que la ventana lo tenga: needFocus)
+const homeIdle = (needFocus = false) => (mode === 'home' || mode === 'sub') && !menu && !tray && !OSK.isOpen && !Intro.active && !PSW.active && !GSUpd.open && live() && (!needFocus || document.hasFocus()) && !Sub.moving() && items.length > 0;
+// un aspecto guardado → lo que se puede aplicar de verdad. Lo que ya no existe, o está eliminado, se sustituye por lo normal: nunca se «resucita» algo eliminado
+function lookValid(l) {
+  const o = { ...l }, th = id => !!THEMES[id] && !hid('theme', id), photo = id => FALL.some(f => f.id === id) && !hid('bg', id);
+  if (!th(o.theme)) o.theme = th(UI.theme) ? UI.theme : (shownThemes()[0] || 'classic');
+  if (!(INTROS[o.intro] && !hid('intro', o.intro) && (o.intro === 'none' || Intro.kinds.includes(o.intro)))) o.intro = INTROS[UI.intro] && !hid('intro', UI.intro) ? UI.intro : 'none';
+  if (o.bg && !(o.bg.startsWith(FX_ID) ? !!FX[o.bg.slice(FX_ID.length)] && !hid('bg', o.bg) : photo(o.bg))) o.bg = '';
+  for (const k of ['introBg', 'pswBg']) if (o[k] && !photo(o[k])) o[k] = '';
+  if (o.bar !== 'auto' && !(BARS[o.bar] && !hid('bar', o.bar))) o.bar = 'auto';
+  if (o.top !== 'auto' && !(TOPS[o.top] && !hid('top', o.top))) o.top = 'auto';
+  if (o.font !== 'auto' && !(String(o.font).startsWith('u:') || (Mej.fonts.all().some(f => f.id === o.font) && !hid('font', o.font)))) o.font = 'auto';   // las importadas (u:) pueden no estar cargadas aún al arrancar
+  if (o.menuSnd !== 'auto' && !FLAVORS[o.menuSnd]) o.menuSnd = 'auto';
+  if (o.introSndSrc !== 'auto' && !ISRC[o.introSndSrc]) o.introSndSrc = 'auto';
+  if (o.play !== 'auto' && !Mej.PLAYS[o.play]) o.play = 'auto';
+  return o;
+}
+const lookSum = l => `${themeName(l.theme)} · ${bgName(l.bg)}${INTROS[l.intro] && l.intro !== 'none' ? ' · ' + INTROS[l.intro][0] : ''}`;   // «Cosmos · Nebulosa · Intro»
+
 // mejoras.js (tipos de letra, ampliación tipo Dock, Brasas, FPS y resolución) recibe aquí lo que necesita de este archivo
 Mej.init({
   ui: () => UI, hid, theme: () => theme, Sound, setUI: p => setUI(p), toast: t => toast(t), openMenu: (...a) => openMenu(...a), closeMenu: () => closeMenu(), rowHtml: (i, h) => rowHtml(i, h),
-  opts: (...a) => opts(...a), items: () => [curItem()], sel: () => 0, layout: () => layout(), refocus: () => refocus(), playId: v => playId(v),   // items/sel: el elemento con el foco (para volver a sus opciones)
+  system: at => power(at), layout: () => layout(), refocus: () => refocus(), playId: v => playId(v),   // system: vuelve al menú Sistema, a la fila de ese submenú
   previewPlay: id => { playPrev = id === 'auto' ? null : id; applyPlay(); show(); },        // «Intro para jugar» en directo mientras se desliza el selector
   afterFont: () => { placePlay(); if (items.length) layout(); },                              // otro tipo de letra: lo colocado midiendo el texto se recoloca
   canDock: () => mode === 'home' && !menu && !OSK.isOpen && (!tray || tray.tab === 'dock') && !Intro.active && !PSW.active && live() && items.length > 0,
@@ -1317,7 +1402,9 @@ Sub.init({
   openItem: it => openItem(it), opts: it => opts(it), toast: t => toast(t), Sound, menuOpen: () => !!menu,
   order: ids => api.order(ids)
 });
-GSUpd.init({ toast: t => toast(t), openMenu: (...a) => openMenu(...a), closeMenu: () => closeMenu(), opts: (...a) => opts(...a), items: () => [curItem()], sel: () => 0, Sound });   // items/sel: el elemento con el foco (para volver a sus Opciones). «Buscar actualizaciones» y «Confirmar que deseo esta actualización»
+GSUpd.init({ toast: t => toast(t), openMenu: (...a) => openMenu(...a), closeMenu: () => closeMenu(), system: at => power(at), Sound });   // «Buscar actualizaciones» (vuelve a Sistema) y «Confirmar que deseo esta actualización»
+Look.init({ ui: () => UI, api, setUI: p => setUI(p), merge: r => { UI = { ...UI, ...r }; }, valid: lookValid, sum: lookSum, idle: () => homeIdle(true), toast: t => toast(t), Sound,
+  openMenu: (...a) => openMenu(...a), ask: (t, o) => ask(t, o), appearance: (at, pj) => appearance(at, pj) });   // carrusel de aspectos
 Mej.fonts.load().then(() => Mej.fonts.apply(UI.font)).catch(() => {});                      // los tipos de letra que importaste
 
 // ───────────────────────── arranque ─────────────────────────
@@ -1328,7 +1415,8 @@ Mej.fonts.load().then(() => Mej.fonts.apply(UI.font)).catch(() => {});          
   setTimeout(() => uncover(true), 10000); // por si algo fallara: que la pantalla no se quede negra
   try {
     try { UI = { ...UI, ...(await api.ui()) }; } catch {}
-    await Promise.all([loadFondos(), loadSounds(true)]); // solo se espera al sonido de la intro; los demás wav se decodifican detrás
+    if (UI.carousel && UI.carousel.boot && UI.carousel.items.length > 1) { await loadFondos(); try { await Look.boot(); } catch (e) { console.warn('carrusel:', e); } await loadSounds(true); }   // el carrusel elige el aspecto ANTES de la intro (con su sonido y su Precarga)
+    else await Promise.all([loadFondos(), loadSounds(true)]); // solo se espera al sonido de la intro; los demás wav se decodifican detrás
     scale(); applyUI();
     const hay = Intro.kinds.includes(UI.intro);
     const pre = UI.psWait ? PSW.show() : null;         // la Precarga se pone ya, DEBAJO de la intro: al desvanecerse la intro sale ella, sin parpadeo del launcher
@@ -1339,6 +1427,6 @@ Mej.fonts.load().then(() => Mej.fonts.apply(UI.font)).catch(() => {});          
     else { await lista; uncover(true); }                // sin intro ni Precarga: el launcher aparece ya cargado, con un fundido
     await p;
     if (pre) await pre;
-  } finally { uncover(true); try { window.gsx && window.gsx.bootDone && window.gsx.bootDone(); } catch {} }   // el launcher ya está listo: main.js activa ahora los mandos Buzz en segundo plano
+  } finally { uncover(true); try { Look.start(); } catch {} try { window.gsx && window.gsx.bootDone && window.gsx.bootDone(); } catch {} }   // el launcher ya está listo: main.js activa ahora los mandos Buzz en segundo plano
   (window.requestIdleCallback ? f => requestIdleCallback(f, { timeout: 8000 }) : f => setTimeout(f, 3000))(() => { try { FXC.nebula(); } catch {} }); // la nebulosa de Cosmos se calcula una vez; así no se nota al deslizar por los estilos
 })();

@@ -140,7 +140,7 @@ const Sound = (() => {
   }
 
   // intro en archivo wav. Si ya está decodificado suena por WebAudio (volumen real + limitador); si no, con un elemento <audio> como siempre
-  const WAVDUR = { ps2: 6.8, ps3: 7, ps5: 6, ps2boot: 9.2 };
+  const WAVDUR = { ps2: 6.8, ps3: 7, ps5: 6, ps2boot: 9.2, 'ps4-pulso': 5.8, neotokio: 5, 'cosmos-eco': 7.4, brasas: 5.8, 'sakura-koto': 6.6, 'retro-8bits': 4 };
   function wavIntro(name) {
     const b = BUF[name], c = b && mk();
     if (!c) return wavIntroEl(name);
@@ -187,7 +187,7 @@ const Sound = (() => {
     resume() { const c = mk(); if (c && c.state === 'suspended') c.resume().catch(() => {}); },
     ui(name) { if (on) playUi(name, forced || flavor); },
     sample(fid, name = 'ok') { if (on) playUi(name, fid); }, // oír un timbre sin cambiar nada (lista de Sonidos)
-    wav(map) { wavs = map || {}; },                  // rutas de los wav: { ps2, ps3, ps5, ps2boot }
+    wav(map) { wavs = map || {}; },                  // rutas de los wav: { ps2, ps3, ps5, ps2boot, ps4-pulso, neotokio… }
     async decode(name, bytes) { // decodifica un wav/mp3/ogg (bytes: Uint8Array/ArrayBuffer) para reproducirlo por WebAudio
       const c = mk(); if (!c || !bytes) return false;
       try { const ab = bytes instanceof ArrayBuffer ? bytes : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength); BUF[name] = await c.decodeAudioData(ab.slice(0)); return true; }

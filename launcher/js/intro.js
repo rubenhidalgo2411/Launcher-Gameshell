@@ -68,7 +68,7 @@ const Intro = (() => {
     if (running) end(true);
     running = true;
     el.className = 'on in-' + kind; el.innerHTML = m.html(o);
-    m.init && m.init(el, o);
+    const stop = m.init && m.init(el, o); if (typeof stop === 'function') stopFx = stop;   // init puede devolver la función que para sus canvas (las de js/intros2.js)
     snd = Sound.intro(o.snd && o.snd !== 'auto' ? o.snd : m.snd); // o.snd: el elegido en Sonidos > Sonido de la intro
     requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('go')));
     (m.cue || []).forEach(([ms, cls]) => later(ms, () => el.classList.add(cls)));
@@ -85,5 +85,6 @@ const Intro = (() => {
   }
   el.addEventListener('click', skip);
 
-  return { play, skip, get active() { return running; }, kinds: Object.keys(M), snd: k => (M[k] || {}).snd };
+  // add: registra una intro desde otro archivo (js/intros2.js) · kinds se calcula al pedirlo, así incluye las añadidas
+  return { play, skip, get active() { return running; }, get kinds() { return Object.keys(M); }, snd: k => (M[k] || {}).snd, add: (k, d) => { M[k] = d; } };
 })();

@@ -51,6 +51,13 @@ body.tray-bar #hint{z-index:5}
 #psw.on #pswmsg{opacity:.7;transition-delay:.9s}
 #psw.ok #pswmsg{opacity:1;color:#8fe8b0;transition-delay:0s}
 /* sin la foto de bienvenida (si la han borrado): el aviso va en grande en el centro */
+/* pantallas pensadas para la Precarga (assets/precargas): título con el nombre del launcher y un zoom muy lento */
+#pswt{position:absolute;left:0;right:0;top:41%;transform:translateY(-50%);text-align:center;opacity:0;pointer-events:none;text-shadow:0 2px 26px #0009}
+#pswt small{display:block;font-size:calc(21*var(--u));letter-spacing:.34em;text-transform:uppercase;opacity:.82;margin-bottom:calc(18*var(--u))}
+#pswt b{display:block;font-size:calc(96*var(--u));font-weight:300;letter-spacing:.2em;text-indent:.2em}
+#psw.pre #pswt{opacity:1;transition:opacity 1.2s .5s}
+#psw.pre #pswbg{animation:pswz 30s ease-in-out infinite alternate}
+@keyframes pswz{from{transform:scale(1)}to{transform:scale(1.07)}}
 #psw.fb #pswmsg{bottom:auto;top:46%;font-size:calc(34*var(--u));opacity:1}
 
 .tc .org.new{background:#1fbf6b;color:#03200e;font-weight:700;opacity:1}

@@ -21,7 +21,7 @@ const GSUpd = (() => {
   async function menu(at = 'check') {
     const g = gsx(); if (!g || !g.updState) return C.toast('Las actualizaciones no están disponibles (falta preload-gs.js)');
     let st = {}; try { st = await g.updState(); } catch {}
-    const back = () => C.opts(C.items()[C.sel()], 'upd');
+    const back = () => C.system('upd');
     if (!st.supervised) {
       const why = st.dev ? 'En modo desarrollo (npm start) no se actualiza' : !st.hay ? 'Falta la carpeta boot: copia también esa carpeta' : 'Hay que abrir el launcher con el arranque seguro: ejecuta otra vez instalar-shell.bat y reinicia la sesión';
       return C.openMenu('Actualizaciones', [['Buscar actualizaciones<small>no disponible</small>', () => { C.Sound.ui('err'); C.toast('No disponible ahora mismo'); menu('check'); }, '', null, 'check'], ['Volver', back, '', null, 'back']], at, { back, help: esc(why) });

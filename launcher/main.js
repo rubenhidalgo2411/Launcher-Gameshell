@@ -262,6 +262,64 @@ ipcMain.handle('desktop', (_, p) => {
   return true;
 });
 
+// «Cerrar el escritorio de Windows» (Esc → Sistema, o Ctrl+Alt+Mayús+H desde el propio escritorio): deja todo como si nunca hubieras salido al escritorio.
+// Solo cuando el launcher ES la shell de Windows: entonces explorer.exe es un visitante (Windows no lo reinicia solo) y cerrarlo es seguro.
+// Si el launcher se abre de forma normal, explorer.exe es el escritorio de verdad y no se toca. No pide contraseña: cerrar el escritorio es el sentido seguro.
+function closeDesktop(why) {
+  return new Promise(res => {
+    if (process.platform !== 'win32') return res({ ok: false, msg: 'Solo en Windows' });
+    if (DEV || shellMode !== true) return res({ ok: false, msg: 'Solo se puede cuando GameShell es la shell de Windows (instalar-shell.bat)' });
+    log('cerrar el escritorio de Windows (' + why + ')');
+    execFile('taskkill', ['/F', '/IM', 'explorer.exe'], { windowsHide: true }, e => {
+      const was = !(e && e.code === 128);                        // 128 = no estaba abierto
+      if (e && e.code !== 128) log('taskkill explorer:', e.message);
+      home(); res({ ok: !e || e.code === 128, was });
+    });
+  });
+}
+ipcMain.handle('desktop:close', () => closeDesktop('Sistema'));
+ipcMain.handle('desktop:state', () => ({ shell: shellMode === true, dev: DEV }));
+
+// ---- Bluetooth sin salir a Windows (Esc → Sistema → Bluetooth) ----
+//  · «Ajustes de Bluetooth»: la página de Bluetooth de la app Configuración de Windows (ms-settings:bluetooth). No abre el escritorio ni hace falta explorer.exe.
+//    Esa app llega a casi todo Windows, así que con contraseña puesta la pide igual que el escritorio.
+//  · «Emparejar un dispositivo»: el asistente clásico «Agregar un dispositivo» (DevicePairingWizard.exe): una sola ventana, sin menús por los que escapar a Windows.
+// El launcher se aparta mientras tanto y vuelve solo al cerrar la ventana; si no se pudiera saber, se vuelve con Alt+Tab o Ctrl+Mayús+H.
+let btWatch = 0;
+const btStop = () => { clearInterval(btWatch); btWatch = 0; };
+function btFollow(image) {   // sigue el proceso de la ventana de Configuración y, cuando ya no está, de vuelta al launcher
+  btStop(); let seen = false; const t0 = Date.now();
+  btWatch = setInterval(() => {
+    execFile('tasklist', ['/FI', 'IMAGENAME eq ' + image, '/NH', '/FO', 'CSV'], { windowsHide: true }, (e, out) => {
+      const up = !e && String(out).toLowerCase().includes(image.toLowerCase());
+      if (up) seen = true;
+      else if (seen) { btStop(); log('Bluetooth: se cerró la ventana, de vuelta al launcher'); home(); }
+      else if (Date.now() - t0 > 15000) btStop();                // nunca llegó a abrirse: no se sigue
+      if (Date.now() - t0 > 1800000) btStop();                    // y a la media hora tampoco
+    });
+  }, 2000);
+}
+ipcMain.handle('bt:open', async (_, kind, pw) => {
+  if (process.platform !== 'win32') return { ok: false, msg: 'Solo en Windows' };
+  try {
+    if (kind === 'settings') {
+      if (!auth(pw)) return { ok: false, pw: true, msg: 'Contraseña incorrecta' };
+      away(); await shell.openExternal('ms-settings:bluetooth'); btFollow('SystemSettings.exe');
+      log('Bluetooth: ajustes de Windows abiertos'); return { ok: true };
+    }
+    if (kind === 'pair') {
+      const exe = path.join(process.env.windir || 'C:\\Windows', 'System32', 'DevicePairingWizard.exe');
+      if (!fs.existsSync(exe)) return { ok: false, msg: 'Este Windows no trae el asistente de emparejamiento' };
+      away(); const t0 = Date.now();
+      const c = spawn(exe, [], { detached: true, stdio: 'ignore' });
+      c.on('error', e => { log('Bluetooth:', e.message); home(); });
+      c.on('exit', () => { if (Date.now() - t0 > 2000) { log('Bluetooth: se cerró el asistente, de vuelta al launcher'); home(); } else log('Bluetooth: el asistente terminó enseguida (no se vuelve solo)'); });
+      c.unref(); log('Bluetooth: asistente de emparejamiento abierto'); return { ok: true };
+    }
+    return { ok: false, msg: 'Opción desconocida' };
+  } catch (e) { log('Bluetooth:', e.message); home(); return { ok: false, msg: 'No se pudo abrir (' + e.message + ')' }; }
+});
+
 // ---- vigía de Windows (vigia.ps1, un PowerShell que corre mientras el launcher está abierto) ----
 // Avisa de dos cosas:
 //  · P1 / P0: hay / no hay un mando encendido. Windows lo ve en cuanto se conecta, pero el navegador (Chromium) no lo enseña a la página hasta que se pulsa un
@@ -403,7 +461,8 @@ const UI_DEF = { theme: 'classic', name: 'GameShell', bg: '', intro: 'ps2-boot',
   introSnd: true, vol: 0.6, menuVol: 0.6, menuSnd: 'auto', introSndSrc: 'auto', bar: 'auto', top: 'auto', psWait: true, psReq: false, pswBg: '', alt: null, mode: '',
   introText: '', tile: 1, tabText: 'Juegos', webText: 'Web', webAds: true, webYt: true, webSb: true, webCookies: true, webOsk: true,
   play: 'auto', font: 'auto', dock: 0, emberY: 0, emberHue: 0, emberSat: 1, cosmosY: 0, fpsOn: false, fpsSize: 1, fpsWord: true, buzzOn: true, buzzBeep: true,
-  hide: { theme: [], bg: [], intro: [], bar: [], top: [], font: [] }, gone: { theme: [], bg: [], intro: [], bar: [], top: [], font: [] }, v: 0 };   // play: «Intro para jugar» (auto|text|btn|cta|none) · font: tipo de letra · dock: ampliación con el ratón (0-3) · emberY/emberHue/emberSat: altura y color de Brasas · fpsOn/fpsSize: contador de FPS · psReq: la Precarga Post Intro no se salta con teclado/ratón · pswBg: su foto · tile: tamaño de los iconos · tabText/webText: lo de arriba a la izquierda · web*: ajustes del navegador
+  carousel: { boot: true, mins: 0, random: false, idx: -1, at: 0, items: [] }, resPre: { m: { w: 1920, h: 1200, hz: 120, ok: false }, s: { w: 3840, h: 2160, hz: 120, ok: false } },
+  hide: { theme: [], bg: [], intro: [], bar: [], top: [], font: [] }, gone: { theme: [], bg: [], intro: [], bar: [], top: [], font: [] }, v: 0 };   // play: «Intro para jugar» (auto|text|btn|cta|none) · font: tipo de letra · dock: ampliación con el ratón (0-3) · emberY/emberHue/emberSat: altura y color de Brasas · fpsOn/fpsSize: contador de FPS · carousel: carrusel de aspectos (cada aspecto guarda estilo, fondo, intro, letra, sonidos y Precarga) · resPre: los dos ajustes rápidos de resolución (teclas M y S; ok = ya confirmados una vez) · psReq: la Precarga Post Intro no se salta con teclado/ratón · pswBg: su foto · tile: tamaño de los iconos · tabText/webText: lo de arriba a la izquierda · web*: ajustes del navegador
    // hide: lo que se «elimina» desde el launcher (se puede restaurar) · gone: lo eliminado definitivamente · v: versión de los ajustes
 // la primera vez, si venías de «actualizacion» (prefs.json), se aprovechan sus ajustes: estilos y intros pasan a sus versiones b-*
 const BTHEME = { classic: 'b-classic', ps5: 'b-ps5', ps3: 'b-ps3', ps2: 'b-ps2', neon: 'b-neon', glass: 'b-glass', oled: 'b-oled' };
@@ -441,6 +500,7 @@ const uiGet = () => {
   if (typeof c.fpsOn !== 'boolean') c.fpsOn = false;
   if (typeof c.fpsWord !== 'boolean') c.fpsWord = true;
   for (const k of ['buzzOn', 'buzzBeep']) if (typeof c[k] !== 'boolean') c[k] = true;   // mandos Buzz: activarlos solos / pitido al detectar el pincho
+  c.carousel = cleanCarousel(c.carousel); c.resPre = cleanResPre(c.resPre);
   if ((j.v || 0) < UI_VER) { // primera vez con esta versión
     c.v = UI_VER; c.intro = 'ps2-boot';
     try { fs.mkdirSync(path.dirname(UIF()), { recursive: true }); fs.writeFileSync(UIF(), JSON.stringify(c, null, 1)); } catch (e) { log('ui.json:', e.message); }
@@ -449,6 +509,52 @@ const uiGet = () => {
 };
 const ID = /^[a-z0-9_-]{1,24}$/i, ISND = /^(wav:)?[a-z0-9_-]{1,24}$/i;
 const idOrAuto = v => typeof v === 'string' && (v === 'auto' || ID.test(v));
+
+// ---- carrusel de aspectos: cada «aspecto» guarda TODO lo que define cómo se ve y suena el launcher (estilo, fondo, barras, letra, intro, sonidos, Precarga…) ----
+// (mismas reglas que uiSet para cada ajuste: lo que no valga se descarta)
+function cleanLook(o) {
+  const l = {}; if (!o || typeof o !== 'object') return l;
+  for (const k of ['theme', 'intro']) if (typeof o[k] === 'string' && ID.test(o[k])) l[k] = o[k];
+  for (const k of ['bg', 'introBg', 'pswBg']) if (typeof o[k] === 'string' && o[k].length < 200) l[k] = o[k];
+  for (const k of ['menuSnd', 'bar', 'top']) if (idOrAuto(o[k])) l[k] = o[k];
+  if (typeof o.introSndSrc === 'string' && (o.introSndSrc === 'auto' || ISND.test(o.introSndSrc))) l.introSndSrc = o.introSndSrc;
+  if (PLAY_K.includes(o.play)) l.play = o.play;
+  if (typeof o.font === 'string' && (o.font === 'auto' || FONT_ID.test(o.font))) l.font = o.font;
+  if (Number.isInteger(o.dock) && o.dock >= 0 && o.dock <= 3) l.dock = o.dock;
+  if (typeof o.tile === 'number' && isFinite(o.tile)) l.tile = Math.max(0.5, Math.min(1.6, Math.round(o.tile * 100) / 100));
+  for (const k of ['emberY', 'cosmosY']) if (typeof o[k] === 'number' && isFinite(o[k])) l[k] = Math.max(-40, Math.min(40, Math.round(o[k])));
+  if (typeof o.emberHue === 'number' && isFinite(o.emberHue)) l.emberHue = ((Math.round(o.emberHue) % 360) + 360) % 360;
+  if (typeof o.emberSat === 'number' && isFinite(o.emberSat)) l.emberSat = Math.max(0, Math.min(2, Math.round(o.emberSat * 100) / 100));
+  for (const k of ['tabText', 'webText']) if (typeof o[k] === 'string') l[k] = o[k].trim().slice(0, 24);
+  if (typeof o.introText === 'string') l.introText = o.introText.trim().slice(0, 40);
+  return l;
+}
+const CAR_MINS = [0, 1, 5, 10, 15, 30, 60, 180, 360, 720, 1440];   // «cambiar cada…» en minutos (0 = nunca solo; siempre se puede a mano con Ctrl+←/→)
+function cleanCarousel(o) {
+  const c = { boot: true, mins: 0, random: false, idx: -1, at: 0, items: [] };
+  if (!o || typeof o !== 'object') return c;
+  if (typeof o.boot === 'boolean') c.boot = o.boot;
+  if (CAR_MINS.includes(o.mins)) c.mins = o.mins;
+  if (typeof o.random === 'boolean') c.random = o.random;
+  if (Array.isArray(o.items)) for (const it of o.items.slice(0, 24)) {
+    if (!it || typeof it !== 'object') continue;
+    const name = typeof it.name === 'string' ? it.name.trim().slice(0, 40) : '';
+    const id = typeof it.id === 'string' && /^[a-z0-9]{1,16}$/i.test(it.id) ? it.id : Math.random().toString(36).slice(2, 10);
+    c.items.push({ id, name: name || 'Aspecto ' + (c.items.length + 1), look: cleanLook(it.look) });
+  }
+  if (Number.isInteger(o.idx) && o.idx >= -1 && o.idx < c.items.length) c.idx = o.idx;
+  if (typeof o.at === 'number' && isFinite(o.at) && o.at > 0) c.at = Math.round(o.at);
+  return c;
+}
+// los dos ajustes rápidos de resolución: M (Moonlight) y S (2160p)
+function cleanResPre(o) {
+  const d = UI_DEF.resPre, r = {}, dim = n => Number.isInteger(n) && n >= 320 && n <= 16384;
+  for (const k of ['m', 's']) {
+    const s = o && typeof o === 'object' && o[k] && typeof o[k] === 'object' ? o[k] : {};
+    r[k] = { w: dim(s.w) ? s.w : d[k].w, h: dim(s.h) ? s.h : d[k].h, hz: Number.isInteger(s.hz) && s.hz >= 20 && s.hz <= 1000 ? s.hz : d[k].hz, ok: s.ok === true };
+  }
+  return r;
+}
 function uiSet(p) {
   const c = uiGet();
   if (typeof p.theme === 'string' && ID.test(p.theme)) c.theme = p.theme;
@@ -481,6 +587,8 @@ function uiSet(p) {
   if (typeof p.fpsSize === 'number' && isFinite(p.fpsSize)) c.fpsSize = Math.max(.5, Math.min(3, Math.round(p.fpsSize * 100) / 100));
   if (typeof p.introSndSrc === 'string' && (p.introSndSrc === 'auto' || ISND.test(p.introSndSrc))) c.introSndSrc = p.introSndSrc;
   if (typeof p.mode === 'string' && (p.mode === '' || ID.test(p.mode))) c.mode = p.mode;
+  if (p.carousel && typeof p.carousel === 'object') c.carousel = cleanCarousel({ ...c.carousel, ...p.carousel });   // el carrusel de aspectos (se manda entero)
+  if (p.resPre && typeof p.resPre === 'object') c.resPre = cleanResPre({ ...c.resPre, ...p.resPre });             // los ajustes rápidos M y S
   if (p.alt === null) c.alt = null; // el otro aspecto para W×4
   else if (p.alt && typeof p.alt === 'object') {
     const a = {};
@@ -504,6 +612,8 @@ const IMG = /\.(jpe?g|png|webp|bmp|gif)$/i;
 const NOMBRES = { 'ps5-pro': 'PS5 Pro', 'ps5-bienvenida': 'PS5 Bienvenida', simbolos: 'Símbolos', 'neon-azul': 'Neón azul', 'neon-colores': 'Neón colores', 'neon-humo': 'Neón humo',
   'aurora-boreal': 'Aurora boreal', nebulosa: 'Nebulosa', 'amanecer-orbital': 'Amanecer orbital', 'seda-iridiscente': 'Seda iridiscente', 'bokeh-nocturno': 'Bokeh nocturno',
   'marmol-liquido': 'Mármol líquido', 'cumbres-niebla': 'Cumbres en la niebla', 'atardecer-mar': 'Atardecer en el mar' };
+const NOMBRES_C = { neotokio: 'Neo-Tokio · lluvia', brasas: 'Brasas', sakura: 'Sakura · luna', cosmos: 'Cosmos · horizonte de sucesos', synthwave: 'Retro · sol y rejilla',
+  cristal: 'Cristal · facetas', oled: 'OLED · anillo', abismo: 'Abismo · bioluminiscencia' };   // nombres de las pantallas de Precarga (assets/precargas); si falta, sale el del archivo
 // miniatura (960 px) para el selector inferior: así no se decodifica una foto de 4K por cada tarjeta, y aun así se ve nítida en pantallas 4K
 function miniatura(src, dst) {
   try {
@@ -513,21 +623,24 @@ function miniatura(src, dst) {
     fs.mkdirSync(path.dirname(dst), { recursive: true }); fs.writeFileSync(dst, r.toJPEG(88)); return true;
   } catch (e) { log('miniatura:', e.message); return false; }
 }
+// pantallas de Precarga (Apariencia → Precarga Post Intro → Foto): imágenes pensadas para esa pantalla; no salen en la lista de fondos
+const PRECARGAS_P = () => path.join(__dirname, 'assets', 'precargas');
 function fondos() {
-  const out = [];
-  const scan = (dir, pre, user) => {
+  const out = [], gone = new Set(((uiGet().gone || {}).bg) || []);   // lo eliminado definitivamente no se lista aunque la actualización haya traído de nuevo el archivo
+  const scan = (dir, px, user, pre) => {
     let fl = []; try { fl = fs.readdirSync(dir).filter(f => IMG.test(f)).sort(); } catch {}
     for (const f of fl) {
+      if (gone.has(px + f)) continue;
       const b = f.replace(/\.[^.]+$/, ''), th = path.join(dir, 'miniaturas', b + '.jpg');
       if (user && !fs.existsSync(th)) miniatura(path.join(dir, f), th); // fotos que ya estaban importadas antes de existir las miniaturas
-      out.push({ id: pre + f, name: user ? b : NOMBRES[b] || b.replace(/[-_]+/g, ' '), url: pathToFileURL(path.join(dir, f)).href, thumb: fs.existsSync(th) ? pathToFileURL(th).href : '', user });
+      out.push({ id: px + f, name: user ? b : (pre ? NOMBRES_C[b] : NOMBRES[b]) || b.replace(/[-_]+/g, ' '), url: pathToFileURL(path.join(dir, f)).href, thumb: fs.existsSync(th) ? pathToFileURL(th).href : '', user, ...(pre ? { pre: true } : {}) });
     }
   };
-  scan(FONDOS_P(), 'p:', false); scan(FONDOS_U(), 'u:', true);
+  scan(FONDOS_P(), 'p:', false); scan(PRECARGAS_P(), 'c:', false, true); scan(FONDOS_U(), 'u:', true);
   return out;
 }
 // sonidos wav de las intros: los de assets/sonidos; si hay uno con el mismo nombre en %APPDATA%\gameshell\sonidos (wav, mp3 u ogg), manda ese
-const SND = ['ps2', 'ps5', 'ps3', 'ps2boot'], SND_EXT = ['wav', 'mp3', 'ogg'];
+const SND = ['ps2', 'ps5', 'ps3', 'ps2boot', 'ps4-pulso', 'neotokio', 'cosmos-eco', 'brasas', 'sakura-koto', 'retro-8bits'], SND_EXT = ['wav', 'mp3', 'ogg'];
 const SND_U = () => path.join(app.getPath('userData'), 'sonidos');
 const sndOwn = n => { for (const e of SND_EXT) { const u = path.join(SND_U(), n + '.' + e); if (fs.existsSync(u)) return u; } return ''; };
 const sndFile = n => sndOwn(n) || path.join(__dirname, 'assets', 'sonidos', n + '.wav');
@@ -574,24 +687,36 @@ ipcMain.handle('fondo:del', (_, id) => { // solo las fotos importadas se borran 
 // eliminar DEFINITIVAMENTE (Apariencia → Restaurar lo eliminado): borra del disco lo que tenga archivos (fotos de Fondo, imágenes de muestra de un estilo).
 // El estilo, el fondo animado o la intro en sí viven en el código: el renderer los anota en «gone» y ya no salen en ningún sitio.
 const ESTILOS_P = () => path.join(__dirname, 'assets', 'estilos');
+// borra los ARCHIVOS de lo eliminado definitivamente (el id ya queda en ui.json → gone) · devuelve cuántos archivos borró (-1: id no válido)
+const rmf = p => { try { fs.unlinkSync(p); return 1; } catch { return 0; } };
+function purgeFiles(k, id) {
+  if (typeof id !== 'string' || id.length > 200) return -1;
+  let n = 0;
+  if (k === 'bg' && /^[pc]:/.test(id)) {          // p: fondos del launcher · c: pantallas de Precarga
+    const f = path.basename(id.slice(2)); if (!f || !IMG.test(f)) return -1;
+    const dir = id[0] === 'p' ? FONDOS_P() : PRECARGAS_P();
+    n += rmf(path.join(dir, f)) + rmf(path.join(dir, 'miniaturas', f.replace(/\.[^.]+$/, '') + '.jpg'));
+  } else if (k === 'bg' && /^fx:[a-z0-9-]{1,24}$/.test(id)) n += rmf(path.join(FONDOS_P(), 'animados', id.slice(3) + '.jpg'));
+  else if (k === 'theme' && ID.test(id)) n += rmf(path.join(ESTILOS_P(), id + '.jpg')) + rmf(path.join(ESTILOS_P(), 'miniaturas', id + '.jpg'));
+  else if (k === 'font' && FONT_ID.test(id) && !id.startsWith('u:')) { // las fuentes que trae el launcher: se borran sus archivos
+    try { for (const f of fs.readdirSync(FUENTES_P())) if (f.startsWith(id + '.') || f.startsWith(id + '-')) n += rmf(path.join(FUENTES_P(), f)); } catch {}
+  }                                                 // intros y barras viven en el código: basta con la lista «gone»
+  return n;
+}
 ipcMain.handle('purge', (_, k, id) => {
-  if (typeof id !== 'string' || id.length > 200) return false;
-  const rm = p => { try { fs.unlinkSync(p); } catch {} };
-  try {
-    if (k === 'bg' && id.startsWith('p:')) {
-      const f = path.basename(id.slice(2)); if (!f || !IMG.test(f)) return false;
-      rm(path.join(FONDOS_P(), f)); rm(path.join(FONDOS_P(), 'miniaturas', f.replace(/\.[^.]+$/, '') + '.jpg')); log('fondo eliminado definitivamente', f);
-    } else if (k === 'bg' && /^fx:[a-z0-9-]{1,24}$/.test(id)) rm(path.join(FONDOS_P(), 'animados', id.slice(3) + '.jpg'));
-    else if (k === 'theme' && ID.test(id)) { rm(path.join(ESTILOS_P(), id + '.jpg')); rm(path.join(ESTILOS_P(), 'miniaturas', id + '.jpg')); log('estilo eliminado definitivamente', id); }
-    else if (k === 'intro' && ID.test(id)) log('intro eliminada definitivamente', id);
-    else if ((k === 'bar' || k === 'top') && ID.test(id)) log('barra eliminada definitivamente', k, id);
-    else if (k === 'font' && FONT_ID.test(id) && !id.startsWith('u:')) { // las fuentes que trae el launcher: se borran sus archivos
-      try { for (const f of fs.readdirSync(FUENTES_P())) if (f.startsWith(id + '.') || f.startsWith(id + '-')) rm(path.join(FUENTES_P(), f)); } catch {}
-      log('fuente eliminada definitivamente', id);
-    }
-    return true;
-  } catch (e) { log('eliminar definitivamente:', e.message); return false; }
+  try { const n = purgeFiles(k, id); if (n < 0) return false; log('eliminado definitivamente:', k, id, n ? '(' + n + ' archivos)' : ''); return true; }
+  catch (e) { log('eliminar definitivamente:', e.message); return false; }
 });
+// «Eliminar definitivamente» tiene que seguir siéndolo DESPUÉS de actualizar: la actualización baja de GitHub la carpeta launcher/ entera
+// y con ella vuelven los archivos que habías borrado (aunque la lista «gone» de ui.json los mantuviera fuera de los selectores).
+// En cada arranque se vuelven a borrar los de esa lista, así no ocupan sitio ni pueden asomar por ningún lado.
+function reapplyGone() {
+  try {
+    const g = uiGet().gone; let n = 0;
+    for (const k of HIDE_K) for (const id of g[k] || []) { const r = purgeFiles(k, id); if (r > 0) n += r; }
+    if (n) log('eliminado definitivamente: se han vuelto a borrar', n, 'archivos que la actualización había traído de nuevo');
+  } catch (e) { log('eliminado definitivamente (arranque):', e.message); }
+}
 ipcMain.handle('fondo:clear', () => { try { fs.rmSync(FONDOS_U(), { recursive: true, force: true }); } catch (e) { log('quitar fotos:', e.message); } return true; });
 
 // ---- tipos de letra: los que trae el launcher (assets/fuentes, declarados en css/fuentes.css y catalogados en js/mejoras.js) + los que importes (%APPDATA%\gameshell\fuentes) ----
@@ -653,6 +778,7 @@ ipcMain.handle('gs:log', (_, t) => { if (typeof t === 'string') log(t.slice(0, 3
 ipcMain.handle('pantalla:lista', () => PANT.list());
 ipcMain.handle('pantalla:cambiar', (_, w, h, hz) => PANT.set(w, h, hz));
 ipcMain.handle('pantalla:mantener', () => PANT.keep());
+ipcMain.handle('pantalla:directa', (_, w, h, hz) => PANT.direct(w, h, hz));   // los ajustes rápidos M y S (ya confirmados una vez): se aplican y guardan sin cuenta atrás
 ipcMain.handle('pantalla:revertir', () => PANT.revert('lo pediste'));
 
 // los popups del navegador se abren en la misma vista
@@ -662,6 +788,7 @@ app.on('will-quit', () => { globalShortcut.unregisterAll(); try { sentinel && se
 if (!app.requestSingleInstanceLock()) app.exit(0);
 else app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
+  reapplyGone();   // «Eliminar definitivamente» sigue siéndolo tras actualizar (ver reapplyGone)
   { // preload extra (window.gsx: fuentes propias, FPS, resolución): va aparte para no tocar tu preload.js
     const pre = { type: 'frame', filePath: path.join(__dirname, 'preload-gs.js') };
     try { session.defaultSession.registerPreloadScript(pre); } catch (e) { try { session.defaultSession.setPreloads([pre.filePath]); } catch (e2) { log('preload-gs:', e2.message); } }
@@ -677,13 +804,14 @@ else app.whenReady().then(() => {
   });
   win.loadFile(path.join(__dirname, 'index.html'));
   win.once('ready-to-show', () => { win.show(); win.focus(); autostart(); });
-  win.on('focus', () => { playing = false; });
+  win.on('focus', () => { playing = false; btStop(); });
   win.webContents.on('render-process-gone', (_, d) => { log('se cayó la página:', d && d.reason); win.reload(); });
   app.on('child-process-gone', (_, d) => log('proceso de Electron caído:', d && d.type, d && d.reason));
   try { if (fs.statSync(LOG()).size > 2e5) fs.writeFileSync(LOG(), ''); } catch {}
   log('inicio', DEV ? '(dev)' : '(shell)');
   if (ACT) log('actualizaciones:', ACT.resumen());
   globalShortcut.register('Control+Shift+H', home);
+  globalShortcut.register('Control+Alt+Shift+H', () => { closeDesktop('atajo Ctrl+Alt+Mayús+H').then(r => { if (!r.ok) home(); }); });   // desde el escritorio de Windows: lo cierra y vuelve al launcher (si no es la shell, solo vuelve)
   globalShortcut.register('Control+Shift+F', () => { try { FPS.toggle(); } catch (e) { log('FPS:', e.message); } }); // contador de FPS: arrancarlo / ocultarlo dentro de un juego
   try { FPS.configure(uiGet()); } catch (e) { log('FPS:', e.message); }
   try { BUZZ.configure(uiGet()); } catch (e) { log('Buzz:', e.message); }

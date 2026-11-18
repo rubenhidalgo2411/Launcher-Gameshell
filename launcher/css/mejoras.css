@@ -50,3 +50,11 @@ body[data-theme^=b-]:not([data-theme=b-ps5])[data-play=cta] #cta{margin-top:22px
 #mn p .tp:hover{background:#ffffff40;opacity:1}
 #mn p.s .tp{background:#0b102024}
 #mn p.s .tp:hover{background:#0b102040}
+
+/* carrusel de aspectos: fundido corto al cambiar de aspecto en directo (js/aspectos.js) */
+#lkfade{position:fixed;inset:0;z-index:8000;background:#000;opacity:0;pointer-events:none}
+/* línea de separación entre grupos de filas en los menús largos (Sistema, Resolución…) */
+#mn p.sep{margin-top:12px;position:relative}
+#mn p.sep::before{content:'';position:absolute;left:22px;right:22px;top:-7px;height:1px;background:#ffffff1f}
+#mn.dn p.sep{margin-top:8px}#mn.dn p.sep::before{top:-5px}
+#mn.dn2 p.sep{margin-top:6px}#mn.dn2 p.sep::before{top:-4px}

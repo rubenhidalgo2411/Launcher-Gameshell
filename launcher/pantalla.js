@@ -31,7 +31,7 @@ function create(env) {
   let timer = 0, pending = null, busy = false;
 
   // GS_PANTALLA_FAKE=1: una pantalla de mentira para probar los menús sin Windows (no se usa en el uso normal)
-  const fake = { cur: [1920, 1080, 60], reg: [1920, 1080, 60], modes: [[3840, 2160, 60], [2560, 1440, 144], [2560, 1440, 60], [1920, 1080, 144], [1920, 1080, 60], [1920, 1080, 50], [1600, 900, 60], [1280, 720, 60], [800, 600, 60]] };
+  const fake = { cur: [1920, 1080, 60], reg: [1920, 1080, 60], modes: [[3840, 2160, 120], [3840, 2160, 60], [2560, 1440, 144], [2560, 1440, 60], [1920, 1200, 120], [1920, 1080, 144], [1920, 1080, 60], [1920, 1080, 50], [1600, 900, 60], [1280, 720, 60], [800, 600, 60]] };
   const fakeRun = a => {
     if (a[0] === 'list') return { ok: true, out: ['DEV \\\\.\\DISPLAY1', 'CUR ' + fake.cur.join(' ') + ' 32', 'REG ' + fake.reg.join(' ') + ' 32', ...fake.modes.map(m => 'MODE ' + m.join(' '))].join('\n') };
     if (a[0] === 'set' || a[0] === 'save') { const m = [+a[1], +a[2], +a[3]]; if (!fake.modes.some(x => x.join() === m.join())) return { ok: false, code: -2, msg: why(-2), out: 'RES -2' }; fake.cur = m; if (a[0] === 'save') fake.reg = m; return { ok: true, out: 'RES 0' }; }
@@ -95,6 +95,21 @@ function create(env) {
       if (!r.ok) { log('resolución: no se pudo guardar', r.msg); await api.revert('no se pudo guardar'); return { ok: false, msg: r.msg + ' (se volvió a la anterior)' }; }
       pending = null; log('resolución: confirmada y guardada', p.w + 'x' + p.h + '@' + p.hz); refit();
       return { ok: true };
+    },
+    // aplica w×h@hz y lo guarda al momento, SIN la cuenta atrás de 15 s: es lo que usan los dos ajustes rápidos (teclas M y S)
+    // cuando ya los has confirmado una vez por el camino seguro (así una tele que no enseñe bien ese modo no te pilla desprevenido)
+    async direct(w, h, hz) {
+      w = Math.round(+w); h = Math.round(+h); hz = Math.round(+hz) || 0;
+      if (!(w >= 320 && w <= 16384 && h >= 200 && h <= 16384 && hz >= 0 && hz <= 1000)) return { ok: false, msg: 'Modo no válido' };
+      if (busy) return { ok: false, msg: 'Espera un momento…' };
+      busy = true;
+      try {
+        stop(); pending = null;
+        const r = await run(['save', w, h, hz]);
+        if (!r.ok) { log('resolución: no se pudo cambiar a', w + 'x' + h + '@' + hz, '·', r.msg); return { ok: false, msg: r.msg }; }
+        log('resolución: ajuste rápido aplicado y guardado', w + 'x' + h + '@' + hz); refit();
+        return { ok: true };
+      } finally { busy = false; }
     },
     async revert(why) {
       stop();

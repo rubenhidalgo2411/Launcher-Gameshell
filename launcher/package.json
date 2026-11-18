@@ -1,6 +1,6 @@
 {
   "name": "gameshell",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Launcher estilo consola para Windows (versión única con todo lo de «actualizado» y «actualizacion»)",
   "main": "main.js",
   "scripts": { "start": "electron . --dev" },

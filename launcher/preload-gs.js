@@ -1,6 +1,6 @@
 'use strict';
 // GameShell · preload extra. main.js lo registra con session.registerPreloadScript, así tu preload.js no se toca.
-// Añade a la ventana del launcher (solo a ella) window.gsx con lo nuevo: tipos de letra propios, contador de FPS, resolución de pantalla, mandos Buzz y actualizaciones.
+// Añade a la ventana del launcher (solo a ella) window.gsx con lo nuevo: tipos de letra propios, contador de FPS, resolución de pantalla, mandos Buzz, actualizaciones, cerrar el escritorio de Windows y Bluetooth.
 const { contextBridge, ipcRenderer } = require('electron');
 try {
   if (location.protocol === 'file:' && /\/index\.html$/i.test(location.pathname) && window === window.top) {
@@ -10,7 +10,9 @@ try {
       fpsState: () => inv('fps:state'), fpsDownload: () => inv('fps:download'), fpsPermission: () => inv('fps:permiso'),
       fpsTest: ms => inv('fps:test', ms), fpsFolder: () => inv('fps:carpeta'),
       screenList: () => inv('pantalla:lista'), screenSet: (w, h, hz) => inv('pantalla:cambiar', w, h, hz),
-      screenKeep: () => inv('pantalla:mantener'), screenRevert: () => inv('pantalla:revertir'),
+      screenKeep: () => inv('pantalla:mantener'), screenRevert: () => inv('pantalla:revertir'), screenDirect: (w, h, hz) => inv('pantalla:directa', w, h, hz),
+      deskClose: () => inv('desktop:close'), deskState: () => inv('desktop:state'),   // cerrar el escritorio de Windows (como si nunca se hubiera abierto)
+      btOpen: (kind, pw) => inv('bt:open', kind, pw),                                // Bluetooth sin salir a Windows: 'settings' | 'pair'
       onScreenEnd: f => ipcRenderer.on('pantalla:fin', (_, d) => f(d)),
       buzzState: () => inv('buzz:state'), buzzRestart: () => inv('buzz:restart'), buzzInstall: () => inv('buzz:install'),
       bootDone: () => ipcRenderer.send('boot:done'),                 // el launcher terminó de arrancar: main.js activa entonces los mandos Buzz
