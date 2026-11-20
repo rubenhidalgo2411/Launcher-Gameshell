@@ -267,12 +267,19 @@ async function loadFondos() { try { FALL = await api.fondos(); } catch { FALL = 
 async function loadSounds(quick) { // quick: en el arranque solo se espera al sonido que necesita la intro; el resto se decodifica en segundo plano
   try { Sound.wav(await api.sounds()); } catch {}
   // los wav se decodifican una vez: suenan por WebAudio (volumen real y limitador). Si alguno falla, suena con <audio> como siempre
-  const names = Object.keys(ISRC).filter(k => k.startsWith('wav:')).map(k => k.slice(4)), dec = async n => { try { const d = await api.soundData(n); if (d) await Sound.decode(n, d); } catch {} };
+  const names = Object.keys(ISRC).filter(k => k.startsWith('wav:')).map(k => k.slice(4)), bad = [];
+  const dec = async n => {
+    try { const d = await api.soundData(n); if (!d) bad.push(n + ' (no está el archivo)'); else if (!(await Sound.decode(n, d))) bad.push(n + ' (ilegible o vacío)'); }
+    catch (e) { bad.push(n + ' (' + (e && e.message || e) + ')'); }
+  };
+  // si algún wav no se pudo cargar, queda escrito en gameshell.log (los sonidos nuevos tienen respaldo sintetizado y suenan igual)
+  const report = () => { if (bad.length) { try { gsx.log('sonidos: no se pudo cargar ' + bad.join(' · ') + (bad.some(b => Sound.wavKinds.includes(b.split(' ')[0])) ? ' → suenan las versiones sintetizadas' : '')); } catch {} bad.length = 0; } };
   const src = UI.introSndSrc !== 'auto' && ISRC[UI.introSndSrc] ? UI.introSndSrc : (Intro.snd(UI.intro) || ''), want = /^wav:/.test(src) ? src.slice(4) : '';
   // el de la intro, primero; los demás de uno en uno y sin prisa (son una decena de archivos: así no se nota en la animación del arranque)
   const first = names.includes(want) ? dec(want) : Promise.resolve(), rest = (async () => { for (const n of names.filter(n => n !== want)) { await dec(n); if (quick) await new Promise(r => setTimeout(r, 120)); } })();
   await first;
   if (!quick) await rest;
+  rest.then(report, report);
 }
 
 // ───────────────────────── lista de juegos ─────────────────────────

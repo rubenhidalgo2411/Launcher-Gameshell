@@ -120,6 +120,91 @@ const Sound = (() => {
   };
   R.photo = R.ps2;
 
+  // ---- versiones sintetizadas de los 6 wav nuevos (PS4 · Pulso, Neo-Tokio, Cosmos · Eco, Brasas, Sakura · Koto, Retro · 8 bits) ----
+  // Suenan SOLAS cuando el .wav no está en la carpeta, no se pudo leer/decodificar o está vacío: así esas intros nunca se quedan mudas
+  // (el .wav, que es más rico, manda siempre que exista). Mismo guion y misma duración que el wav; se escriben con las mismas piezas que las intros de arriba.
+  const rnd = seed => () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+  const RWK = { 'ps4-pulso': 1.1, neotokio: 1, 'cosmos-eco': .56, brasas: 1, 'sakura-koto': 1.5, 'retro-8bits': .8 };   // recorte de nivel de cada uno
+  const RW = {
+    'ps4-pulso'(c, B, t) {    // colchón de Re mayor con novena que se abre + latidos + destellos y, en el segundo 3, golpe grave y acorde de campanas
+      [[73.42, 1, -9], [110, .8, 9], [146.83, .8, -9], [185, .55, 9], [220, .55, -9], [329.63, .35, 9]]
+        .forEach(([f, k, det]) => swell(c, B, { f, t, type: 'sawtooth', det, up: 2.8, hold: .5, down: 2.5, g: .06 * k, lp1: 260, lp2: 3400, wet: .5 }));
+      [0, .62, 1.22, 1.78, 2.3, 2.76].forEach((tm, i) => voice(c, B, { f: 95, f2: 42, t: t + tm, d: 0, a: .004, r: .22, g: .14 + .02 * i, wet: .1 }));
+      const R = rnd(4), P = [587.33, 659.25, 739.99, 880, 987.77, 1174.66];
+      for (let i = 0; i < 13; i++) { const tm = .9 + R() * 2.05; bell(c, B, P[(R() * P.length) | 0], t + tm, { g: .03 + tm * .014, dec: 1.5 }); }
+      const T = t + 3;
+      voice(c, B, { f: 72, f2: 34, t: T, d: 0, a: .004, r: .6, g: .34, wet: .1 });
+      [[293.66, .8], [587.33, 1], [739.99, .7], [880, .8], [1108.73, .5], [1318.51, .35]].forEach(([f, k]) => bell(c, B, f, T, { g: .11 * k, dec: 3.2 }));
+      whoosh(c, B, { t: T, d: .35, f1: 5500, f2: 9500, g: .05, q: 1 });
+      return 5.8;
+    },
+    neotokio(c, B, t) {       // zumbido de pantalla que se enciende, bajo y arpegio a 140 BPM, golpe con acorde ancho y zumbido de neón
+      voice(c, B, { f: 250, f2: 9000, t, d: 0, a: .01, r: .28, g: .06, wet: .1 });
+      voice(c, B, { f: 100, f2: 34, t: t + .3, d: 0, a: .004, r: .45, g: .26, wet: .1 });
+      const S = 60 / 140 / 4;
+      for (let i = 0; i < 10; i++) voice(c, B, { f: 55, t: t + .45 + i * S * 2, d: .1, a: .005, r: .12, g: .14, type: 'sawtooth', lp: 220, wet: .1 });
+      [220, 261.63, 329.63, 392, 493.88, 392, 329.63, 261.63, 220, 261.63, 329.63, 493.88, 523.25, 493.88, 392, 329.63, 220, 261.63, 329.63, 392, 493.88, 659.25, 587.33, 493.88]
+        .forEach((f, i) => { const tm = .45 + i * S; if (tm < 2.55) voice(c, B, { f, t: t + tm, d: .04, a: .004, r: .09, g: .05, type: 'sawtooth', lp: 2600, det: i % 2 ? 8 : -8, wet: .25 }); });
+      const T = t + 2.6;
+      voice(c, B, { f: 80, f2: 30, t: T, d: 0, a: .004, r: 1.1, g: .36, wet: .1 });
+      [110, 164.81, 220, 261.63, 329.63, 392, 493.88].forEach((f, i) => swell(c, B, { f, t: T, type: 'sawtooth', det: i % 2 ? 12 : -12, up: .02, hold: .35, down: 1.9, g: .05, lp1: 5200, lp2: 700, wet: .5 }));
+      whoosh(c, B, { t: T, d: .45, f1: 3000, f2: 9000, g: .09, q: .9 });
+      voice(c, B, { f: 100, t: T, d: 1.4, a: .02, r: .8, g: .06, type: 'sawtooth', lp: 900, wet: .2 });
+      return 5;
+    },
+    'cosmos-eco'(c, B, t) {   // zumbido grave + viaje warp que sube y frena en seco (segundo 2,7) + coro de «ah» + estrellitas y campana
+      swell(c, B, { f: 36.71, t, type: 'sine', up: 1.6, hold: 3.8, down: 2, g: .18, wet: .3 });
+      swell(c, B, { f: 55, t, type: 'triangle', up: 1.6, hold: 3.8, down: 2, g: .07, wet: .3 });
+      whoosh(c, B, { t, d: 2.6, f1: 160, f2: 7000, g: .18, q: 1.3 });
+      whoosh(c, B, { t, d: 2.6, f1: 240, f2: 9000, g: .09, q: 3, wet: .5 });
+      voice(c, B, { f: 146.83, f2: 587.33, t, d: 2.4, a: 2.4, r: .3, g: .07, wet: .3 });
+      const T = t + 2.7;
+      voice(c, B, { f: 107, f2: 36, t: T, d: 0, a: .004, r: .8, g: .36, wet: .1 });
+      whoosh(c, B, { t: T, d: .6, f1: 6000, f2: 300, g: .09, q: 1.2 });
+      [[146.83, -10], [220, 10], [329.63, -10], [349.23, 10], [440, -10], [587.33, 10]]
+        .forEach(([f, det], i) => swell(c, B, { f, t: t + 2.6, type: 'sawtooth', det, up: 1.3, hold: 1.5, down: 2.2, g: .04 - i * .003, lp1: 600, lp2: 1900, wet: .75 }));
+      const R = rnd(9), S = [1318.51, 1760, 2349.32, 1975.53, 1479.98];
+      for (let i = 0; i < 11; i++) bell(c, B, S[(R() * S.length) | 0], t + 3 + R() * 3.2, { g: .022, dec: 1.5, wet: .7 });
+      bell(c, B, 587.33, t + 4.9, { g: .07, dec: 3.4 }); bell(c, B, 880, t + 5, { g: .05, dec: 3 });
+      return 7.4;
+    },
+    brasas(c, B, t) {         // crepitar que va a más, ignición, metales cálidos en Sol y llamarada en el segundo 3
+      const R = rnd(22); let tm = 0;
+      while (tm < 5.4) {
+        const rate = tm < 4.2 ? 5 + 38 * Math.pow(Math.sin(Math.PI * tm / 4.2), 1.2) : 10 * Math.exp(-(tm - 4.2) / 1.2) + 2;
+        tm += -Math.log(1 - R()) / rate;
+        voice(c, B, { f: 1400 + R() * 3500, t: t + tm, d: 0, a: .001, r: .01 + R() * .02, g: Math.min(.1, .03 * -Math.log(1 - R())), type: 'square', wet: .12, lp: 7000 });
+      }
+      whoosh(c, B, { t: t + 1, d: 1.6, f1: 120, f2: 2200, g: .14, q: .8 });
+      swell(c, B, { f: 45, t: t + 1.1, type: 'sine', up: 1, hold: .8, down: 1.8, g: .14, wet: .2 });
+      [[98, 0], [146.83, -8], [196, 8], [246.94, -8], [293.66, 8], [349.23, 0]]
+        .forEach(([f, det], i) => swell(c, B, { f, t: t + 1.4, type: 'sawtooth', det, up: 1.6, hold: .6, down: 1.9, g: .05 - i * .004, lp1: 450, lp2: 2600, wet: .4 }));
+      whoosh(c, B, { t: t + 3, d: .55, f1: 900, f2: 7000, g: .12, q: .9 });
+      bell(c, B, 783.99, t + 3.05, { g: .06, dec: 2 });
+      return 5.8;
+    },
+    'sakura-koto'(c, B, t) {  // rasgueo, frase pentatónica a modo de koto, viento suave y cuenco al final
+      const pl = (f, tm, g, d = 2) => {
+        voice(c, B, { f, t: t + tm, type: 'triangle', d: 0, a: .003, r: d * .7, g: g * .13, wet: .4 });
+        voice(c, B, { f: f * 2.01, t: t + tm, type: 'sine', d: 0, a: .002, r: d * .22, g: g * .045, wet: .3 });
+      };
+      [146.83, 220, 293.66, 329.63, 349.23, 440, 587.33].forEach((f, i) => pl(f, .08 + i * .052, .55 + .07 * i, 1.4));
+      [[440, .95, .9], [349.23, 1.35, .8], [329.63, 1.77, .8], [293.66, 2.32, 1], [349.23, 2.74, .7], [440, 3.1, .7], [587.33, 3.55, .9], [880, 4.25, .6]].forEach(([f, tm, g]) => pl(f, tm, g, 2.2));
+      pl(146.83, 3.55, .9, 3); pl(220, 3.6, .6, 2.6);
+      whoosh(c, B, { t, d: 3.4, f1: 500, f2: 1400, g: .03, q: .6, wet: .5 });
+      [[1, 1, 1], [2.71, .5, .7], [5.12, .22, .45], [8.5, .1, .3]].forEach(([k, a, dk]) => voice(c, B, { f: 293.66 * k, t: t + 3.55, d: 0, a: .01, r: 4.4 * dk, g: .07 * a, wet: .6 }));
+      return 6.6;
+    },
+    'retro-8bits'(c, B, t) {  // dos arpegios que suben, acorde final con bajo, «moneda» y eco, todo con ondas cuadradas
+      const sq = (f, tm, d, g, o = {}) => voice(c, B, { f, t: t + tm, type: 'square', d, a: .002, r: .03, g, wet: .12, ...o });
+      [[523.25, 659.25, 783.99, 1046.5], [659.25, 783.99, 1046.5, 1318.51]].forEach((arr, k) => arr.forEach((f, i) => sq(f, k * .34 + i * .07, .05, .06)));
+      [523.25, 659.25, 783.99].forEach(f => sq(f, .72, 1.5, .04, { a: .01, r: 1 }));
+      voice(c, B, { f: 130.81, t: t + .72, type: 'triangle', d: 1.6, a: .01, r: .9, g: .16, wet: .15 }); voice(c, B, { f: 261.63, t: t + .72, type: 'triangle', d: 1.5, a: .01, r: .9, g: .1, wet: .15 });
+      sq(987.77, 2.1, .06, .06); sq(1318.51, 2.19, .3, .06, { r: .5 });
+      return 4;
+    }
+  };
+
   // ---- efectos de menú (cada estilo les da un timbre distinto) ----
   const FL = { classic: [1, 'sine'], ps5: [1.12, 'sine'], ps3: [.9, 'sine'], ps2: [.72, 'triangle'], neon: [1.2, 'triangle'], aurora: [1.05, 'sine'], synth: [1, 'square'],
     ps4: [.96, 'sine'], cyber: [1.34, 'triangle'], cosmos: [.82, 'sine'], ember: [.68, 'triangle'], sakura: [1.26, 'sine'] };
@@ -139,11 +224,28 @@ const Sound = (() => {
     for (const n of s) voice(c, G.ui, { type: n.type || type, d: 0, a: .004, wet: .12, ...n, f: n.f * (n.type ? 1 : mul), f2: n.f2 ? n.f2 * (n.type ? 1 : mul) : 0, t: t0 + (n.t || 0) });
   }
 
+  // intro sintetizada: crea sus buses, la programa y devuelve { dur, stop(skipped) } (la usan R y el respaldo RW de los wav nuevos)
+  function synthIntro(fn, trim = 1) {
+    const c = mk(); if (!c) return { dur: 0, stop() {} };
+    if (c.state === 'suspended') c.resume().catch(() => {});
+    const bus = c.createGain(), sbus = c.createGain(); bus.connect(G.out); sbus.connect(G.send);
+    bus.gain.value = sbus.gain.value = Math.min(2.4, lvl(vol)) * trim; // con el volumen por defecto (60 %) suena igual que siempre
+    const dur = fn(c, { out: bus, send: sbus }, c.currentTime + .08);
+    return {
+      dur,
+      stop() { // al saltar la intro: se apaga todo, incluida la cola de reverb, y luego se restaura para los sonidos de menú
+        const t = c.currentTime;
+        [bus, sbus, G.rg].forEach(n => { n.gain.cancelScheduledValues(t); n.gain.setValueAtTime(n.gain.value, t); n.gain.linearRampToValueAtTime(0, t + .3); });
+        setTimeout(() => { const n = c.currentTime; G.rg.gain.cancelScheduledValues(n); G.rg.gain.setValueAtTime(.6, n); }, 4000);
+      }
+    };
+  }
+
   // intro en archivo wav. Si ya está decodificado suena por WebAudio (volumen real + limitador); si no, con un elemento <audio> como siempre
   const WAVDUR = { ps2: 6.8, ps3: 7, ps5: 6, ps2boot: 9.2, 'ps4-pulso': 5.8, neotokio: 5, 'cosmos-eco': 7.4, brasas: 5.8, 'sakura-koto': 6.6, 'retro-8bits': 4 };
   function wavIntro(name) {
     const b = BUF[name], c = b && mk();
-    if (!c) return wavIntroEl(name);
+    if (!c) return RW[name] ? synthIntro(RW[name], RWK[name]) : wavIntroEl(name);   // sin wav decodificado: los nuevos suenan sintetizados; los de siempre, con <audio>
     if (c.state === 'suspended') c.resume().catch(() => {});
     const src = c.createBufferSource(), g = c.createGain(), lim = c.createDynamicsCompressor();
     src.buffer = b; g.gain.value = .6 * lvl(vol);                       // con el 60 % suena igual que antes (volume = .6)
@@ -190,8 +292,12 @@ const Sound = (() => {
     wav(map) { wavs = map || {}; },                  // rutas de los wav: { ps2, ps3, ps5, ps2boot, ps4-pulso, neotokio… }
     async decode(name, bytes) { // decodifica un wav/mp3/ogg (bytes: Uint8Array/ArrayBuffer) para reproducirlo por WebAudio
       const c = mk(); if (!c || !bytes) return false;
-      try { const ab = bytes instanceof ArrayBuffer ? bytes : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength); BUF[name] = await c.decodeAudioData(ab.slice(0)); return true; }
-      catch { delete BUF[name]; return false; }
+      try {
+        const ab = bytes instanceof ArrayBuffer ? bytes : bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), buf = await c.decodeAudioData(ab.slice(0));
+        let pk = 0; for (let ch = 0; ch < buf.numberOfChannels; ch++) { const d = buf.getChannelData(ch); for (let i = 0; i < d.length; i += 17) { const v = Math.abs(d[i]); if (v > pk) pk = v; } }
+        if (pk < .001) { delete BUF[name]; return false; }          // decodificó pero está vacío/mudo (archivo corrupto): como si no estuviera, así entra el respaldo
+        BUF[name] = buf; return true;
+      } catch { delete BUF[name]; return false; }
     },
     has(name) { return !!BUF[name]; },
     // oír el nivel de la intro al mover su regulador: dos campanitas por el mismo camino que la intro
@@ -205,29 +311,20 @@ const Sound = (() => {
     intro(src) {
       if (!introOn || !src) return { dur: 0, stop() {} };
       if (String(src).startsWith('wav:')) return wavIntro(src.slice(4));
-      const c = R[src] && mk(); if (!c) return { dur: 0, stop() {} };
-      if (c.state === 'suspended') c.resume().catch(() => {});
-      const bus = c.createGain(), sbus = c.createGain(); bus.connect(G.out); sbus.connect(G.send);
-      bus.gain.value = sbus.gain.value = Math.min(2.4, lvl(vol)); // con el volumen por defecto (60 %) suena igual que siempre
-      const dur = R[src](c, { out: bus, send: sbus }, c.currentTime + .08);
-      return {
-        dur,
-        stop() { // al saltar la intro: se apaga todo, incluida la cola de reverb, y luego se restaura para los sonidos de menú
-          const t = c.currentTime;
-          [bus, sbus, G.rg].forEach(n => { n.gain.cancelScheduledValues(t); n.gain.setValueAtTime(n.gain.value, t); n.gain.linearRampToValueAtTime(0, t + .3); });
-          setTimeout(() => { const n = c.currentTime; G.rg.gain.cancelScheduledValues(n); G.rg.gain.setValueAtTime(.6, n); }, 4000);
-        }
-      };
+      return R[src] ? synthIntro(R[src]) : { dur: 0, stop() {} };
     },
     // para pruebas: renderiza una intro sin altavoces y devuelve las muestras
     async render(kind, extra = 1) {
-      const sr = 44100, probe = new OfflineAudioContext(2, sr, sr), d = R[kind](probe, { out: probe.createGain(), send: probe.createGain() }, 0);
+      const fn = R[kind] || RW[kind];
+      const sr = 44100, probe = new OfflineAudioContext(2, sr, sr), d = fn(probe, { out: probe.createGain(), send: probe.createGain() }, 0);
       const c = new OfflineAudioContext(2, Math.ceil(sr * (d + extra)), sr), B = graph(c);
-      R[kind](c, B, 0);
+      if (RWK[kind]) { B.out.gain.value = RWK[kind]; B.send.gain.value = RWK[kind]; }
+      fn(c, B, 0);
       const buf = await c.startRendering();
       return { dur: d, sr, l: Array.from(buf.getChannelData(0)), r: Array.from(buf.getChannelData(1)) };
     },
     kinds: Object.keys(R),
+    wavKinds: Object.keys(RW),                       // los wav que tienen respaldo sintetizado
     flavors: Object.keys(FL)
   };
 })();
